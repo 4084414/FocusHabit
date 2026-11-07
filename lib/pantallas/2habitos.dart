@@ -28,6 +28,8 @@ class PantallaHabitos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Hábitos')),
       body: ListView.separated(
@@ -42,7 +44,10 @@ class PantallaHabitos extends StatelessWidget {
               title: Text(habit['title'] ?? ''),
               subtitle: Text('Objetivo: ${habit['target']}'),
               trailing: IconButton(
-                icon: const Icon(Icons.edit_outlined),
+                icon: Icon(
+                  Icons.edit_outlined,
+                  color: colorScheme.primary, // Usa el color del tema
+                ),
                 onPressed: () {},
               ),
             ),

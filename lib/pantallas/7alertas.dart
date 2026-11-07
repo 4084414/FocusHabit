@@ -102,7 +102,7 @@ class PantallaAlertasPostura extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  alert['timestamp'],
+                                  alert['timestamp']!,
                                   style: theme.textTheme.labelMedium?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
                                     fontWeight: FontWeight.bold,
@@ -118,7 +118,7 @@ class PantallaAlertasPostura extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              alert['issue'],
+                              alert['issue']!,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
