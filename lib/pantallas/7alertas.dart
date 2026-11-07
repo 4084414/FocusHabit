@@ -14,77 +14,76 @@ class PantallaAlertasPostura extends StatefulWidget {
 
 class _PantallaAlertasPosturaState extends State<PantallaAlertasPostura> {
   // Lista mutable inicializada con alertas de ejemplo para visualizar la interfaz
-  final List<Map<String, String>> _alerts = [
+  final List<Map<String, String>> _alertas = [
     {
-      'issue': 'Inclinación de cabeza pronunciada',
-      'timestamp': '11:42 AM',
-      'severity': 'high',
-      'duration': '3 min',
+      'incidencia': 'Inclinación de cabeza pronunciada',
+      'hora': '11:42 AM',
+      'severidad': 'alta',
+      'duracion': '3 min',
     },
     {
-      'issue': 'Slouching detected (Espalda encorvada)',
-      'timestamp': '11:15 AM',
-      'severity': 'high',
-      'duration': '5 min',
+      'incidencia': 'Slouching detected (Espalda encorvada)',
+      'hora': '11:15 AM',
+      'severidad': 'alta',
+      'duracion': '5 min',
     },
     {
-      'issue': 'Hombros desalineados',
-      'timestamp': '10:30 AM',
-      'severity': 'medium',
-      'duration': '2 min',
+      'incidencia': 'Hombros desalineados',
+      'hora': '10:30 AM',
+      'severidad': 'media',
+      'duracion': '2 min',
     },
     {
-      'issue': 'Distancia muy corta a la pantalla',
-      'timestamp': '09:50 AM',
-      'severity': 'medium',
-      'duration': '1 min',
+      'incidencia': 'Distancia muy corta a la pantalla',
+      'hora': '09:50 AM',
+      'severidad': 'media',
+      'duracion': '1 min',
     },
   ];
 
-  CameraController? _cameraController;
-  bool _isCameraActive =
-      false; // Bandera para saber si la cámara está encendida
+  CameraController? _controladorCamara;
+  bool _camaraActiva = false; // Bandera para saber si la cámara está encendida
   bool _puedeAgregarAlerta =
       true; // Controla el tiempo de espera (cooldown) para simular alertas
   Timer?
-  _cooldownTimer; // Temporizador para limitar la frecuencia de simulación
+  _temporizadorEspera; // Temporizador para limitar la frecuencia de simulación
 
   @override
   void dispose() {
-    _cameraController?.dispose(); // Libera el controlador de la cámara
-    _cooldownTimer
+    _controladorCamara?.dispose(); // Libera el controlador de la cámara
+    _temporizadorEspera
         ?.cancel(); // Cancela el temporizador activo al destruir la vista
     super.dispose();
   }
 
   /// Método para activar o apagar la cámara del dispositivo de forma dinámica.
-  Future<void> _toggleCamara() async {
-    if (_isCameraActive) {
-      await _cameraController?.dispose();
+  Future<void> _alternarCamara() async {
+    if (_camaraActiva) {
+      await _controladorCamara?.dispose();
       setState(() {
-        _cameraController = null;
-        _isCameraActive = false;
+        _controladorCamara = null;
+        _camaraActiva = false;
       });
     } else {
       try {
-        final cameras = await availableCameras();
-        if (cameras.isNotEmpty) {
+        final camaras = await availableCameras();
+        if (camaras.isNotEmpty) {
           // Busca preferentemente la cámara frontal para monitorizar la postura del usuario
-          final frontCamera = cameras.firstWhere(
-            (c) => c.lensDirection == CameraLensDirection.front,
-            orElse: () => cameras.first,
+          final camaraFrontal = camaras.firstWhere(
+            (camara) => camara.lensDirection == CameraLensDirection.front,
+            orElse: () => camaras.first,
           );
 
-          _cameraController = CameraController(
-            frontCamera,
+          _controladorCamara = CameraController(
+            camaraFrontal,
             ResolutionPreset.medium,
             enableAudio: false,
           );
 
-          await _cameraController!.initialize();
+          await _controladorCamara!.initialize();
           if (mounted) {
             setState(() {
-              _isCameraActive = true;
+              _camaraActiva = true;
             });
           }
         }
@@ -96,26 +95,26 @@ class _PantallaAlertasPosturaState extends State<PantallaAlertasPostura> {
 
   /// Simula la detección de un movimiento incorrecto de postura captado por la IA/cámara.
   void _detectarMovimientoIncorrecto() {
-    if (!_isCameraActive || !_puedeAgregarAlerta) return;
+    if (!_camaraActiva || !_puedeAgregarAlerta) return;
 
-    final now = DateTime.now();
+    final ahora = DateTime.now();
     final horaFormateada =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} ${now.hour >= 12 ? 'PM' : 'AM'}';
+        '${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')} ${ahora.hour >= 12 ? 'PM' : 'AM'}';
 
     // Inserta una nueva alerta de alta severidad al inicio de la lista
     setState(() {
-      _alerts.insert(0, {
-        'issue': 'Postura incorrecta detectada (Movimiento)',
-        'timestamp': horaFormateada,
-        'severity': 'high',
-        'duration': '1 min',
+      _alertas.insert(0, {
+        'incidencia': 'Postura incorrecta detectada (Movimiento)',
+        'hora': horaFormateada,
+        'severidad': 'alta',
+        'duracion': '1 min',
       });
       _puedeAgregarAlerta =
           false; // Bloquea temporalmente el botón de simulación
     });
 
     // Inicia un temporizador de 10 segundos de enfriamiento (cooldown) antes de permitir otra simulación
-    _cooldownTimer = Timer(const Duration(seconds: 10), () {
+    _temporizadorEspera = Timer(const Duration(seconds: 10), () {
       if (mounted) {
         setState(() {
           _puedeAgregarAlerta = true;
@@ -134,24 +133,24 @@ class _PantallaAlertasPosturaState extends State<PantallaAlertasPostura> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tema = Theme.of(context);
+    final esquemaColores = tema.colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Alertas de Postura')),
       body: Column(
         children: [
           // Vista previa de la cámara (se muestra únicamente si está activa e inicializada correctamente)
-          if (_isCameraActive &&
-              _cameraController != null &&
-              _cameraController!.value.isInitialized)
+          if (_camaraActiva &&
+              _controladorCamara != null &&
+              _controladorCamara!.value.isInitialized)
             Container(
               height: 200,
               width: double.infinity,
               color: Colors.black,
               child: Stack(
                 children: [
-                  CameraPreview(_cameraController!),
+                  CameraPreview(_controladorCamara!),
                   Positioned(
                     bottom: 8,
                     left: 8,
@@ -175,17 +174,17 @@ class _PantallaAlertasPosturaState extends State<PantallaAlertasPostura> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16.0),
-              itemCount: _alerts.length,
-              itemBuilder: (context, index) {
-                final alert = _alerts[index];
-                final isHighSeverity = alert['severity'] == 'high';
-                final isLast = index == _alerts.length - 1;
+              itemCount: _alertas.length,
+              itemBuilder: (context, indice) {
+                final alerta = _alertas[indice];
+                final severidadAlta = alerta['severidad'] == 'alta';
+                final esUltima = indice == _alertas.length - 1;
 
                 // Asigna colores de advertencia según la severidad (rojo para alto, ámbar para medio)
-                final warningColor = isHighSeverity
+                final colorAdvertencia = severidadAlta
                     ? Colors.red.shade400
                     : Colors.amber.shade700;
-                final backgroundColor = isHighSeverity
+                final colorFondo = severidadAlta
                     ? Colors.red.withValues(alpha: 0.1)
                     : Colors.amber.withValues(alpha: 0.1);
 
@@ -199,22 +198,22 @@ class _PantallaAlertasPosturaState extends State<PantallaAlertasPostura> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: backgroundColor,
+                              color: colorFondo,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              isHighSeverity
+                              severidadAlta
                                   ? Icons.warning_amber_rounded
                                   : Icons.info_outline,
-                              color: warningColor,
+                              color: colorAdvertencia,
                               size: 20,
                             ),
                           ),
-                          if (!isLast)
+                          if (!esUltima)
                             Expanded(
                               child: Container(
                                 width: 2,
-                                color: colorScheme.outlineVariant,
+                                color: esquemaColores.outlineVariant,
                               ),
                             ),
                         ],
@@ -226,7 +225,7 @@ class _PantallaAlertasPosturaState extends State<PantallaAlertasPostura> {
                           padding: const EdgeInsets.only(bottom: 24.0),
                           child: Card(
                             elevation: 0,
-                            color: colorScheme.surfaceContainerLow,
+                            color: esquemaColores.surfaceContainerLow,
                             margin: EdgeInsets.zero,
                             child: Padding(
                               padding: const EdgeInsets.all(12.0),
@@ -238,28 +237,29 @@ class _PantallaAlertasPosturaState extends State<PantallaAlertasPostura> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        alert['timestamp']!,
-                                        style: theme.textTheme.labelMedium
+                                        alerta['hora']!,
+                                        style: tema.textTheme.labelMedium
                                             ?.copyWith(
-                                              color:
-                                                  colorScheme.onSurfaceVariant,
+                                              color: esquemaColores
+                                                  .onSurfaceVariant,
                                               fontWeight: FontWeight.bold,
                                             ),
                                       ),
                                       Text(
-                                        'Duración: ${alert['duration']}',
-                                        style: theme.textTheme.labelSmall
+                                        'Duración: ${alerta['duracion']}',
+                                        style: tema.textTheme.labelSmall
                                             ?.copyWith(
-                                              color: colorScheme.outline,
+                                              color: esquemaColores.outline,
                                             ),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    alert['issue']!,
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                    alerta['incidencia']!,
+                                    style: tema.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -279,7 +279,7 @@ class _PantallaAlertasPosturaState extends State<PantallaAlertasPostura> {
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (_isCameraActive)
+          if (_camaraActiva)
             FloatingActionButton.extended(
               heroTag: 'btn_simular_movimiento',
               onPressed: _puedeAgregarAlerta
@@ -296,9 +296,9 @@ class _PantallaAlertasPosturaState extends State<PantallaAlertasPostura> {
           const SizedBox(height: 12),
           FloatingActionButton.extended(
             heroTag: 'btn_camara',
-            onPressed: _toggleCamara,
-            icon: Icon(_isCameraActive ? Icons.videocam_off : Icons.videocam),
-            label: Text(_isCameraActive ? 'Apagar Cámara' : 'Activar Cámara'),
+            onPressed: _alternarCamara,
+            icon: Icon(_camaraActiva ? Icons.videocam_off : Icons.videocam),
+            label: Text(_camaraActiva ? 'Apagar Cámara' : 'Activar Cámara'),
           ),
         ],
       ),

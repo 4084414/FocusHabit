@@ -12,58 +12,60 @@ class PantallaSesionEstudio extends StatefulWidget {
 }
 
 class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
-  bool _isRunning = false; // Indica si el temporizador está activo o pausado
-  final int _totalSeconds =
+  bool _estaEnMarcha = false; // Indica si el temporizador está activo o pausado
+  final int _totalSegundos =
       25 * 60; // Duración total de la sesión: 25 minutos en segundos
-  int _remainingSeconds =
+  int _segundosRestantes =
       25 * 60; // Segundos restantes que van disminuyendo en la cuenta atrás
-  Timer? _timer; // Instancia del temporizador periódico
+  Timer? _temporizador; // Instancia del temporizador periódico
 
   /// Alterna el estado del temporizador entre en marcha (Play) y pausado (Pause).
-  void _toggleTimer() {
-    if (_isRunning) {
-      _timer?.cancel(); // Detiene el temporizador si ya estaba corriendo
-      setState(() => _isRunning = false);
+  void _alternarTemporizador() {
+    if (_estaEnMarcha) {
+      _temporizador?.cancel(); // Detiene el temporizador si ya estaba corriendo
+      setState(() => _estaEnMarcha = false);
     } else {
-      setState(() => _isRunning = true);
+      setState(() => _estaEnMarcha = true);
       // Crea un temporizador que se ejecuta cada 1 segundo exacto
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (_remainingSeconds > 0) {
-          setState(() => _remainingSeconds--); // Decrementa el tiempo restante
+      _temporizador = Timer.periodic(const Duration(seconds: 1), (
+        temporizador,
+      ) {
+        if (_segundosRestantes > 0) {
+          setState(() => _segundosRestantes--); // Decrementa el tiempo restante
         } else {
-          _timer?.cancel(); // Cancela el temporizador al llegar a cero
-          setState(() => _isRunning = false);
+          _temporizador?.cancel(); // Cancela el temporizador al llegar a cero
+          setState(() => _estaEnMarcha = false);
         }
       });
     }
   }
 
   /// Reinicia el temporizador a su estado inicial de 25 minutos y lo detiene.
-  void _resetTimer() {
-    _timer?.cancel();
+  void _reiniciarTemporizador() {
+    _temporizador?.cancel();
     setState(() {
-      _isRunning = false;
-      _remainingSeconds = _totalSeconds;
+      _estaEnMarcha = false;
+      _segundosRestantes = _totalSegundos;
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel(); // Libera el temporizador para evitar fugas de memoria (memory leaks) al cerrar la pantalla
+    _temporizador?.cancel(); // Libera el temporizador para evitar fugas de memoria (memory leaks) al cerrar la pantalla
     super.dispose();
   }
 
   /// Método auxiliar para formatear los segundos restantes en un string de tipo "MM:SS".
-  String _formatTime(int seconds) {
-    final mins = (seconds ~/ 60).toString().padLeft(2, '0');
-    final secs = (seconds % 60).toString().padLeft(2, '0');
-    return '$mins:$secs';
+  String _formatearTiempo(int segundos) {
+    final minutos = (segundos ~/ 60).toString().padLeft(2, '0');
+    final segundosFormateados = (segundos % 60).toString().padLeft(2, '0');
+    return '$minutos:$segundosFormateados';
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final esquemaColores = Theme.of(context).colorScheme;
+    final temaTexto = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -79,14 +81,14 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
+                  color: esquemaColores.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '🟢 IA Activa',
-                  style: textTheme.labelSmall?.copyWith(
+                  style: temaTexto.labelSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: colorScheme.onPrimaryContainer,
+                    color: esquemaColores.onPrimaryContainer,
                   ),
                 ),
               ),
@@ -103,18 +105,18 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
 
             // Muestra el tiempo restante formateado de forma destacada (ej. "25:00")
             Text(
-              _formatTime(_remainingSeconds),
-              style: textTheme.displayLarge?.copyWith(
+              _formatearTiempo(_segundosRestantes),
+              style: temaTexto.displayLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: colorScheme.primary,
+                color: esquemaColores.primary,
               ),
             ),
             const SizedBox(height: 8),
             // Texto descriptivo del estado actual del temporizador ("En curso..." o "Pausado")
             Text(
-              _isRunning ? 'En curso...' : 'Pausado',
-              style: textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+              _estaEnMarcha ? 'En curso...' : 'Pausado',
+              style: temaTexto.titleMedium?.copyWith(
+                color: esquemaColores.onSurfaceVariant,
               ),
             ),
 
@@ -125,7 +127,7 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 OutlinedButton(
-                  onPressed: _resetTimer,
+                  onPressed: _reiniciarTemporizador,
                   style: OutlinedButton.styleFrom(
                     shape: const CircleBorder(),
                     padding: const EdgeInsets.all(16),
@@ -134,8 +136,8 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
                 ),
                 const SizedBox(width: 24),
                 FloatingActionButton.large(
-                  onPressed: _toggleTimer,
-                  child: Icon(_isRunning ? Icons.pause : Icons.play_arrow),
+                  onPressed: _alternarTemporizador,
+                  child: Icon(_estaEnMarcha ? Icons.pause : Icons.play_arrow),
                 ),
               ],
             ),

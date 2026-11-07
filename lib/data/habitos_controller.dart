@@ -8,134 +8,136 @@ class HabitosController extends ChangeNotifier {
   HabitosController._();
 
   // Lista privada que almacena los hábitos iniciales con sus propiedades.
-  final List<Map<String, String>> _habits = [
+  final List<Map<String, String>> _habitos = [
     {
-      'title': 'Postura recta en la silla',
-      'target': '1 min cada hora',
-      'category': 'Ergonomics',
-      'completed': 'false',
+      'titulo': 'Postura recta en la silla',
+      'objetivo': '1 min cada hora',
+      'categoria': 'Ergonomics',
+      'completado': 'false',
     },
     {
-      'title': 'Regla 20-20-20 (descanso visual)',
-      'target': '20 seg cada 20 min',
-      'category': 'Eye Care',
-      'completed': 'false',
+      'titulo': 'Regla 20-20-20 (descanso visual)',
+      'objetivo': '20 seg cada 20 min',
+      'categoria': 'Eye Care',
+      'completado': 'false',
     },
     {
-      'title': 'Vaso de agua al despertar',
-      'target': '1 vez al día',
-      'category': 'Hydration',
-      'completed': 'false',
+      'titulo': 'Vaso de agua al despertar',
+      'objetivo': '1 vez al día',
+      'categoria': 'Hydration',
+      'completado': 'false',
     },
     {
-      'title': 'Pausa activa y estiramientos',
-      'target': '3 veces al día',
-      'category': 'Ergonomics',
-      'completed': 'false',
+      'titulo': 'Pausa activa y estiramientos',
+      'objetivo': '3 veces al día',
+      'categoria': 'Ergonomics',
+      'completado': 'false',
     },
     {
-      'title': 'Bloque de enfoque profundo (Pomodoro)',
-      'target': '4 veces al día',
-      'category': 'Focus',
-      'completed': 'false',
+      'titulo': 'Bloque de enfoque profundo (Pomodoro)',
+      'objetivo': '4 veces al día',
+      'categoria': 'Focus',
+      'completado': 'false',
     },
     {
-      'title': 'Parpadeo consciente e hidratación ocular',
-      'target': '5 min al día',
-      'category': 'Eye Care',
-      'completed': 'false',
+      'titulo': 'Parpadeo consciente e hidratación ocular',
+      'objetivo': '5 min al día',
+      'categoria': 'Eye Care',
+      'completado': 'false',
     },
     {
-      'title': 'Caminar o subir escaleras',
-      'target': '2 veces al día',
-      'category': 'Fitness',
-      'completed': 'false',
+      'titulo': 'Caminar o subir escaleras',
+      'objetivo': '2 veces al día',
+      'categoria': 'Fitness',
+      'completado': 'false',
     },
     {
-      'title': 'Beber agua durante la jornada',
-      'target': '8 veces al día',
-      'category': 'Hydration',
-      'completed': 'false',
+      'titulo': 'Beber agua durante la jornada',
+      'objetivo': '8 veces al día',
+      'categoria': 'Hydration',
+      'completado': 'false',
     },
     {
-      'title': 'Desconectar pantallas antes de dormir',
-      'target': '1 vez al día',
-      'category': 'Sleep',
-      'completed': 'false',
+      'titulo': 'Desconectar pantallas antes de dormir',
+      'objetivo': '1 vez al día',
+      'categoria': 'Sleep',
+      'completado': 'false',
     },
     {
-      'title': 'Ajustar brillo y distancia del monitor',
-      'target': '1 vez al día',
-      'category': 'Ergonomics',
-      'completed': 'false',
+      'titulo': 'Ajustar brillo y distancia del monitor',
+      'objetivo': '1 vez al día',
+      'categoria': 'Ergonomics',
+      'completado': 'false',
     },
   ];
 
   // Getter público para obtener la lista completa de hábitos.
-  List<Map<String, String>> get habits => _habits;
+  List<Map<String, String>> get habitos => _habitos;
 
   // Retorna la cantidad total de hábitos registrados.
-  int get totalHabitos => _habits.length;
+  int get totalHabitos => _habitos.length;
 
   // Cuenta cuántos hábitos tienen el estado 'completed' en 'true'.
   int get habitosCompletados =>
-      _habits.where((h) => h['completed'] == 'true').length;
+      _habitos.where((habito) => habito['completado'] == 'true').length;
 
   // Calcula el porcentaje de progreso general (devuelve un valor entre 0.0 y 1.0).
   double get progreso =>
       totalHabitos > 0 ? habitosCompletados / totalHabitos : 0.0;
 
   /// Devuelve los 3 primeros hábitos que aún no han sido completados.
-  List<Map<String, String>> get primerosTresSinCompletar =>
-      _habits.where((h) => h['completed'] != 'true').take(3).toList();
+  List<Map<String, String>> get primerosTresSinCompletar => _habitos
+      .where((habito) => habito['completado'] != 'true')
+      .take(3)
+      .toList();
 
   // Agrega un nuevo hábito a la lista y notifica a los oyentes.
-  void addHabito(Map<String, String> habito) {
-    _habits.add(habito);
+  void agregarHabito(Map<String, String> habito) {
+    _habitos.add(habito);
     notifyListeners();
   }
 
   // Actualiza un hábito existente en una posición específica.
-  void updateHabito(int index, Map<String, String> habito) {
-    if (index >= 0 && index < _habits.length) {
-      _habits[index] = habito;
+  void actualizarHabito(int indice, Map<String, String> habito) {
+    if (indice >= 0 && indice < _habitos.length) {
+      _habitos[indice] = habito;
       notifyListeners();
     }
   }
 
   // Elimina un hábito según su índice.
-  void removeHabitoAt(int index) {
-    if (index >= 0 && index < _habits.length) {
-      _habits.removeAt(index);
+  void eliminarHabitoEnIndice(int indice) {
+    if (indice >= 0 && indice < _habitos.length) {
+      _habitos.removeAt(indice);
       notifyListeners();
     }
   }
 
   // Inserta un hábito en una posición específica.
-  void insertHabito(int index, Map<String, String> habito) {
-    _habits.insert(index, habito);
+  void insertarHabito(int indice, Map<String, String> habito) {
+    _habitos.insert(indice, habito);
     notifyListeners();
   }
 
   // Alterna el estado de completado (true/false) pasando el mapa del hábito.
-  void toggleCompletado(Map<String, String> habito) {
-    final isCompleted = habito['completed'] == 'true';
-    habito['completed'] = isCompleted ? 'false' : 'true';
+  void alternarCompletado(Map<String, String> habito) {
+    final estaCompletado = habito['completado'] == 'true';
+    habito['completado'] = estaCompletado ? 'false' : 'true';
     notifyListeners();
   }
 
   // Alterna el estado de completado mediante el índice del hábito
-  void toggleCompletadoAt(int index) {
-    if (index >= 0 && index < _habits.length) {
-      final isCompleted = _habits[index]['completed'] == 'true';
-      _habits[index]['completed'] = isCompleted ? 'false' : 'true';
+  void alternarCompletadoEnIndice(int indice) {
+    if (indice >= 0 && indice < _habitos.length) {
+      final estaCompletado = _habitos[indice]['completado'] == 'true';
+      _habitos[indice]['completado'] = estaCompletado ? 'false' : 'true';
       notifyListeners();
     }
   }
 
   /// Método auxiliar estático para asignar un icono representativo según la categoría del hábito.
-  static IconData getIconForCategory(String? category) {
-    switch (category) {
+  static IconData obtenerIconoPorCategoria(String? categoria) {
+    switch (categoria) {
       case 'Ergonomía':
         return Icons.chair_alt;
       case 'Salud visual':

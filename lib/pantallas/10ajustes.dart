@@ -13,7 +13,7 @@ class PantallaAjustes extends StatefulWidget {
 }
 
 class _PantallaAjustesState extends State<PantallaAjustes> {
-  bool _notificationsEnabled =
+  bool _notificacionesHabilitadas =
       true; // Estado local para el interruptor de notificaciones
 
   /// Método auxiliar para formatear objetos DateTime a cadenas legibles de tipo "DD/MM/AAAA".
@@ -39,7 +39,7 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
       cancelText: 'Cancelar',
     );
     if (seleccionada != null) {
-      rachas.setFechaInicio(
+      rachas.establecerFechaInicio(
         seleccionada,
       ); // Actualiza la fecha de inicio en el controlador
     }
@@ -49,7 +49,7 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
   /// para editar manualmente el récord histórico de la mayor racha.
   Future<void> _editarMayorRacha(BuildContext context) async {
     final rachas = RachasController.instance;
-    final controller = TextEditingController(
+    final controladorTexto = TextEditingController(
       text: rachas.mayorRacha.toString(),
     );
 
@@ -64,7 +64,7 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
             const Text('Introduce el récord de días de tu mayor racha:'),
             const SizedBox(height: 16),
             TextField(
-              controller: controller,
+              controller: controladorTexto,
               keyboardType: TextInputType.number,
               autofocus: true,
               decoration: const InputDecoration(
@@ -82,7 +82,7 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
           ),
           FilledButton(
             onPressed: () {
-              final valor = int.tryParse(controller.text.trim());
+              final valor = int.tryParse(controladorTexto.text.trim());
               if (valor != null && valor >= 0) {
                 Navigator.pop(
                   ctx,
@@ -97,7 +97,7 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
     );
 
     if (nuevoValor != null) {
-      rachas.setMayorRacha(
+      rachas.establecerMayorRacha(
         nuevoValor,
       ); // Actualiza la mayor racha en el controlador
     }
@@ -105,17 +105,17 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tema = Theme.of(context);
+    final esquemaColores = tema.colorScheme;
     final rachas = RachasController.instance;
-    final themeController =
+    final controladorTema =
         ThemeController.instance; // Instancia del controlador de temas
 
     return Scaffold(
       appBar: AppBar(title: const Text('Ajustes y Configuración')),
       // Listenable.merge permite escuchar simultáneamente múltiples controladores (rachas y tema)
       body: ListenableBuilder(
-        listenable: Listenable.merge([rachas, themeController]),
+        listenable: Listenable.merge([rachas, controladorTema]),
         builder: (context, _) {
           return ListView(
             padding: const EdgeInsets.all(8.0),
@@ -124,25 +124,25 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
               SwitchListTile(
                 secondary: Icon(
                   Icons.notifications_none_outlined,
-                  color: colorScheme.primary,
+                  color: esquemaColores.primary,
                 ),
                 title: const Text('Notificaciones y Alertas'),
-                value: _notificationsEnabled,
-                onChanged: (val) => setState(() => _notificationsEnabled = val),
+                value: _notificacionesHabilitadas,
+                onChanged: (habilitadas) =>
+                    setState(() => _notificacionesHabilitadas = habilitadas),
               ),
 
               // 2. Interruptor para cambiar entre Tema Claro y Tema Oscuro globalmente
               SwitchListTile(
                 secondary: Icon(
                   Icons.dark_mode_outlined,
-                  color: colorScheme.primary,
+                  color: esquemaColores.primary,
                 ),
                 title: const Text('Tema Oscuro'),
-                value: themeController
-                    .isDarkMode, // Consulta el estado real en el controlador
-                onChanged: (val) {
-                  themeController.toggleTheme(
-                    val,
+                value: controladorTema.estaEnModoOscuro, // Consulta el estado real en el controlador
+                onChanged: (oscuro) {
+                  controladorTema.alternarTema(
+                    oscuro,
                   ); // Modifica el tema en toda la aplicación
                 },
               ),
@@ -159,15 +159,15 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
                   children: [
                     Icon(
                       Icons.local_fire_department,
-                      color: colorScheme.primary,
+                      color: esquemaColores.primary,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'Configuración de Rachas (Simulación)',
-                      style: theme.textTheme.titleSmall?.copyWith(
+                      style: tema.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
+                        color: esquemaColores.primary,
                       ),
                     ),
                   ],
@@ -178,7 +178,7 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
               ListTile(
                 leading: Icon(
                   Icons.calendar_month_outlined,
-                  color: colorScheme.primary,
+                  color: esquemaColores.primary,
                 ),
                 title: const Text('Día de inicio de racha actual'),
                 subtitle: Text(
@@ -192,7 +192,7 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
               ListTile(
                 leading: Icon(
                   Icons.emoji_events_outlined,
-                  color: colorScheme.primary,
+                  color: esquemaColores.primary,
                 ),
                 title: const Text('Mayor racha histórica'),
                 subtitle: Text('${rachas.mayorRacha} días récord'),
@@ -204,10 +204,13 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
 
               // 3. Opción para borrar los datos del usuario (acción peligrosa en rojo)
               ListTile(
-                leading: Icon(Icons.delete_outline, color: colorScheme.error),
+                leading: Icon(
+                  Icons.delete_outline,
+                  color: esquemaColores.error,
+                ),
                 title: Text(
                   'Borrar Datos de Usuario',
-                  style: TextStyle(color: colorScheme.error),
+                  style: TextStyle(color: esquemaColores.error),
                 ),
                 onTap: () {
                   // Aquí se implementaría la lógica para restablecer los datos

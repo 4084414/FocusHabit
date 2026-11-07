@@ -3,57 +3,60 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Acceso único a la base de datos SQLite de FocusHabit.
-/// Uso: final db = await DatabaseHelper.instance.database;
+/// Uso: final baseDatos = await DatabaseHelper.instance.baseDatos;
 class DatabaseHelper {
   DatabaseHelper._();
   static final DatabaseHelper instance = DatabaseHelper._();
 
-  static const _dbName = 'focushabit.db';
-  static const _dbVersion = 1;
-  static const _schemaAsset = 'assets/db/focushabit_schema.sql';
+  static const _nombreBaseDatos = 'focushabit.db';
+  static const _versionBaseDatos = 1;
+  static const _rutaEsquema = 'assets/db/focushabit_schema.sql';
 
-  static Database? _db;
+  static Database? _baseDatos;
 
-  Future<Database> get database async => _db ??= await _open();
+  Future<Database> get baseDatos async => _baseDatos ??= await _abrir();
 
-  Future<Database> _open() async {
-    final path = join(await getDatabasesPath(), _dbName);
+  Future<Database> _abrir() async {
+    final ruta = join(await getDatabasesPath(), _nombreBaseDatos);
     return openDatabase(
-      path,
-      version: _dbVersion,
+      ruta,
+      version: _versionBaseDatos,
       // Activa las claves foráneas (SQLite las desactiva por defecto).
-      onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+      onConfigure: (baseDatos) => baseDatos.execute('PRAGMA foreign_keys = ON'),
       // Solo se ejecuta la primera vez que se crea el archivo .db.
-      onCreate: _onCreate,
+      onCreate: _alCrear,
     );
   }
 
-  Future<void> _onCreate(Database db, int version) async {
-    final script = await rootBundle.loadString(_schemaAsset);
+  Future<void> _alCrear(Database baseDatos, int version) async {
+    final esquema = await rootBundle.loadString(_rutaEsquema);
 
     // Quita comentarios de línea completa y separa por ';'.
-    final sentencias = script
+    final sentencias = esquema
         .split('\n')
-        .where((l) => !l.trimLeft().startsWith('--'))
+        .where((linea) => !linea.trimLeft().startsWith('--'))
         .join('\n')
         .split(';')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty && !s.toUpperCase().startsWith('PRAGMA'));
+        .map((sentencia) => sentencia.trim())
+        .where(
+          (sentencia) =>
+              sentencia.isNotEmpty &&
+              !sentencia.toUpperCase().startsWith('PRAGMA'),
+        );
 
-    final batch = db.batch();
-    for (final s in sentencias) {
-      batch.execute(s);
+    final lote = baseDatos.batch();
+    for (final sentencia in sentencias) {
+      lote.execute(sentencia);
     }
-    await batch.commit(noResult: true);
+    await lote.commit(noResult: true);
   }
-
 
   String _hoy() => DateTime.now().toIso8601String().substring(0, 10);
 
   /// Suma cantidad a un hábito hoy (también para «Marca dos vasos de agua»).
   Future<int> registrar(int habitoId, {int cantidad = 1}) async {
-    final db = await database;
-    return db.insert('registro', {
+    final baseDatos = await this.baseDatos;
+    return baseDatos.insert('registro', {
       'habito_id': habitoId,
       'fecha': _hoy(),
       'cantidad': cantidad,
@@ -62,14 +65,17 @@ class DatabaseHelper {
 
   /// Guarda una alerta: 'postura' o 'descanso_visual'.
   Future<int> guardarAlerta(String tipo) async {
-    final db = await database;
-    return db.insert('alerta', {'tipo': tipo}); // fecha: valor por defecto
+    final baseDatos = await this.baseDatos;
+    return baseDatos.insert('alerta', {
+      'tipo': tipo,
+    }); // fecha: valor por defecto
   }
 
   /// Progreso de hoy: SUM(cantidad) frente a meta (pantalla Hoy).
   Future<List<Map<String, Object?>>> progresoHoy() async {
-    final db = await database;
-    return db.rawQuery('''
+    final baseDatos = await this.baseDatos;
+    return baseDatos.rawQuery(
+      '''
       SELECT h.id, h.nombre, c.color, h.meta_diaria,
              COALESCE(SUM(r.cantidad), 0) AS total_hoy
       FROM habito h
@@ -77,13 +83,16 @@ class DatabaseHelper {
       LEFT JOIN registro r ON r.habito_id = h.id AND r.fecha = ?
       GROUP BY h.id
       ORDER BY c.nombre, h.nombre
-    ''', [_hoy()]);
+    ''',
+      [_hoy()],
+    );
   }
 
   /// Racha actual (días consecutivos cumplidos) de un hábito.
   Future<int> rachaActual(int habitoId) async {
-    final db = await database;
-    final res = await db.rawQuery('''
+    final baseDatos = await this.baseDatos;
+    final resultado = await baseDatos.rawQuery(
+      '''
       WITH dias AS (
         SELECT fecha, SUM(cantidad) AS total
         FROM registro WHERE habito_id = ? GROUP BY fecha
@@ -101,7 +110,9 @@ class DatabaseHelper {
       FROM grupos GROUP BY grp
       HAVING MAX(fecha) >= date('now', '-1 day', 'localtime')
       ORDER BY MAX(fecha) DESC LIMIT 1
-    ''', [habitoId, habitoId]);
-    return res.isEmpty ? 0 : res.first['dias'] as int;
+    ''',
+      [habitoId, habitoId],
+    );
+    return resultado.isEmpty ? 0 : resultado.first['dias'] as int;
   }
 }

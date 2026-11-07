@@ -14,13 +14,13 @@ class PantallaNuevoHabito extends StatefulWidget {
 }
 
 class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
-  late final TextEditingController _controller;
-  late String _selectedCategory;
-  late int _dailyTarget;
-  bool _isCompleted = false;
+  late final TextEditingController _controladorTexto;
+  late String _categoriaSeleccionada;
+  late int _objetivoDiario;
+  bool _estaCompletado = false;
 
   // Lista predeterminada de categorías disponibles para los hábitos
-  final List<String> _categories = [
+  final List<String> _categorias = [
     'Ergonomía',
     'Salud visual',
     'Hidratación',
@@ -38,48 +38,50 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
     final habito = widget.habitoAEditar;
 
     // Inicializa el controlador del campo de texto con el título actual (si edita) o vacío (si crea)
-    _controller = TextEditingController(text: habito?['title'] ?? '');
+    _controladorTexto = TextEditingController(text: habito?['titulo'] ?? '');
 
     // Configura la categoría seleccionada inicialmente
-    final cat = habito?['category'];
-    if (cat != null && cat.isNotEmpty) {
+    final categoria = habito?['categoria'];
+    if (categoria != null && categoria.isNotEmpty) {
       // Si la categoría del hábito no está en la lista predeterminada, la añade para evitar errores
-      if (!_categories.contains(cat)) {
-        _categories.add(cat);
+      if (!_categorias.contains(categoria)) {
+        _categorias.add(categoria);
       }
-      _selectedCategory = cat;
+      _categoriaSeleccionada = categoria;
     } else {
-      _selectedCategory = 'Ergonomics'; // Categoría por defecto
+      _categoriaSeleccionada = 'Ergonomics'; // Categoría por defecto
     }
 
     // Extrae de forma segura el valor numérico del objetivo diario a partir del texto guardado
-    final targetStr = habito?['target'] ?? '';
-    final match = RegExp(r'\d+').firstMatch(targetStr);
-    _dailyTarget = match != null ? (int.tryParse(match.group(0)!) ?? 1) : 1;
+    final textoObjetivo = habito?['objetivo'] ?? '';
+    final coincidencia = RegExp(r'\d+').firstMatch(textoObjetivo);
+    _objetivoDiario = coincidencia != null
+        ? (int.tryParse(coincidencia.group(0)!) ?? 1)
+        : 1;
 
     // Configura el estado inicial de completado
-    _isCompleted = habito?['completed'] == 'true';
+    _estaCompletado = habito?['completado'] == 'true';
   }
 
   @override
   void dispose() {
-    _controller
+    _controladorTexto
         .dispose(); // Libera el controlador de texto al cerrar la pantalla
     super.dispose();
   }
 
   /// Valida el campo de texto y devuelve un mapa con los datos del hábito actualizado o nuevo a la pantalla anterior.
   void _guardarHabito() {
-    if (_controller.text.trim().isEmpty)
+    if (_controladorTexto.text.trim().isEmpty)
       return; // Evita guardar hábitos sin título
 
     final nuevoHabito = {
-      'title': _controller.text.trim(),
-      'target': _dailyTarget == 1
+      'titulo': _controladorTexto.text.trim(),
+      'objetivo': _objetivoDiario == 1
           ? '1 vez al día'
-          : '$_dailyTarget veces al día',
-      'category': _selectedCategory,
-      'completed': _isCompleted ? 'true' : 'false',
+          : '$_objetivoDiario veces al día',
+      'categoria': _categoriaSeleccionada,
+      'completado': _estaCompletado ? 'true' : 'false',
     };
 
     Navigator.pop(
@@ -95,7 +97,7 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
       builder: (ctx) => AlertDialog(
         title: const Text('Borrar hábito'),
         content: Text(
-          '¿Seguro que deseas eliminar "${widget.habitoAEditar?['title']}"?',
+          '¿Seguro que deseas eliminar "${widget.habitoAEditar?['titulo']}"?',
         ),
         actions: [
           TextButton(
@@ -116,13 +118,13 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
 
     // Si el usuario confirma, retorna una acción de borrado a la pantalla anterior
     if (confirmar == true && mounted) {
-      Navigator.pop(context, const {'action': 'delete'});
+      Navigator.pop(context, const {'accion': 'borrar'});
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final temaTexto = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -148,7 +150,7 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
           children: [
             // 1. Campo de texto para ingresar o modificar el nombre del hábito
             TextField(
-              controller: _controller,
+              controller: _controladorTexto,
               decoration: const InputDecoration(
                 labelText: 'Nombre del hábito',
                 border: OutlineInputBorder(),
@@ -158,16 +160,18 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
 
             // 2. Selector desplegable (Dropdown) para escoger la categoría
             DropdownButtonFormField<String>(
-              value: _selectedCategory,
+              value: _categoriaSeleccionada,
               decoration: const InputDecoration(
                 labelText: 'Categoría',
                 border: OutlineInputBorder(),
               ),
-              items: _categories
+              items: _categorias
                   .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                   .toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedCategory = val);
+              onChanged: (valor) {
+                if (valor != null) {
+                  setState(() => _categoriaSeleccionada = valor);
+                }
               },
             ),
             const SizedBox(height: 16),
@@ -176,24 +180,24 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Objetivo diario:', style: textTheme.bodyLarge),
+                Text('Objetivo diario:', style: temaTexto.bodyLarge),
                 Row(
                   children: [
                     IconButton(
                       icon: const Icon(Icons.remove),
-                      onPressed: _dailyTarget > 1
-                          ? () => setState(() => _dailyTarget--)
+                      onPressed: _objetivoDiario > 1
+                          ? () => setState(() => _objetivoDiario--)
                           : null, // Deshabilita el botón si el objetivo es 1
                     ),
                     Text(
-                      '$_dailyTarget',
-                      style: textTheme.titleMedium?.copyWith(
+                      '$_objetivoDiario',
+                      style: temaTexto.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.add),
-                      onPressed: () => setState(() => _dailyTarget++),
+                      onPressed: () => setState(() => _objetivoDiario++),
                     ),
                   ],
                 ),
@@ -206,17 +210,17 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Hábito completado hoy'),
-                subtitle: Text(_isCompleted ? 'Completado' : 'Pendiente'),
-                value: _isCompleted,
+                subtitle: Text(_estaCompletado ? 'Completado' : 'Pendiente'),
+                value: _estaCompletado,
                 secondary: Icon(
-                  _isCompleted
+                  _estaCompletado
                       ? Icons.check_circle
                       : Icons.check_circle_outline,
-                  color: _isCompleted
+                  color: _estaCompletado
                       ? Theme.of(context).colorScheme.primary
                       : null,
                 ),
-                onChanged: (val) => setState(() => _isCompleted = val),
+                onChanged: (valor) => setState(() => _estaCompletado = valor),
               ),
             ],
             const Spacer(),

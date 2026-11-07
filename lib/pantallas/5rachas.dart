@@ -25,8 +25,8 @@ class PantallaRachas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
+    final temaTexto = Theme.of(context).textTheme;
+    final esquemaColores = Theme.of(context).colorScheme;
     final rachas = RachasController.instance;
 
     final ahora = DateTime.now();
@@ -60,19 +60,19 @@ class PantallaRachas extends StatelessWidget {
                 children: [
                   Expanded(
                     child: StatCard(
-                      title: 'Racha Actual',
-                      value:
+                      titulo: 'Racha Actual',
+                      valor:
                           '$rachaActual ${rachaActual == 1 ? "día" : "días"}',
-                      icon: Icons.local_fire_department,
+                      icono: Icons.local_fire_department,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: StatCard(
-                      title: 'Racha Máxima',
-                      value:
+                      titulo: 'Racha Máxima',
+                      valor:
                           '$rachaMaxima ${rachaMaxima == 1 ? "día" : "días"}',
-                      icon: Icons.emoji_events,
+                      icono: Icons.emoji_events,
                     ),
                   ),
                 ],
@@ -82,15 +82,15 @@ class PantallaRachas extends StatelessWidget {
               // 2. Resumen dinámico del mes en curso
               Text(
                 nombreMes,
-                style: textTheme.titleMedium?.copyWith(
+                style: temaTexto.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 '$porcentaje% completado este mes ($diasCompletados de $diasEnMes días)',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                style: temaTexto.bodyMedium?.copyWith(
+                  color: esquemaColores.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 12),
@@ -100,9 +100,9 @@ class PantallaRachas extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: (diasCompletados / diasEnMes).clamp(0.0, 1.0),
                   minHeight: 8,
-                  backgroundColor: colorScheme.surfaceContainerHighest,
+                  backgroundColor: esquemaColores.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    colorScheme.primary,
+                    esquemaColores.primary,
                   ),
                 ),
               ),
@@ -112,18 +112,18 @@ class PantallaRachas extends StatelessWidget {
               // 3. Tarjeta informativa sobre la simulación y ajustes de fecha
               Card(
                 elevation: 0,
-                color: colorScheme.surfaceContainerLow,
+                color: esquemaColores.surfaceContainerLow,
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Row(
                     children: [
-                      Icon(Icons.tune, color: colorScheme.primary, size: 20),
+                      Icon(Icons.tune, color: esquemaColores.primary, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Puedes ajustar la fecha de inicio y la racha máxima desde la pestaña de Ajustes.',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+                          style: temaTexto.bodySmall?.copyWith(
+                            color: esquemaColores.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -141,21 +141,21 @@ class PantallaRachas extends StatelessWidget {
 
 /// Widget reutilizable para representar tarjetas de estadísticas individuales
 class StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
+  final String titulo;
+  final String valor;
+  final IconData icono;
 
   const StatCard({
     super.key,
-    required this.title,
-    required this.value,
-    required this.icon,
+    required this.titulo,
+    required this.valor,
+    required this.icono,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
+    final temaTexto = Theme.of(context).textTheme;
+    final esquemaColores = Theme.of(context).colorScheme;
 
     return Card(
       child: Padding(
@@ -168,22 +168,22 @@ class StatCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    title,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                    titulo,
+                    style: temaTexto.bodyMedium?.copyWith(
+                      color: esquemaColores.onSurfaceVariant,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 // Icono representativo superior con el color primario (#2E7D6B)
-                Icon(icon, size: 22, color: colorScheme.primary),
+                Icon(icono, size: 22, color: esquemaColores.primary),
               ],
             ),
             const SizedBox(height: 12),
             // Valor numérico o texto principal de la estadística
             Text(
-              value,
-              style: textTheme.headlineSmall?.copyWith(
+              valor,
+              style: temaTexto.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),

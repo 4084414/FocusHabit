@@ -12,62 +12,62 @@ class PantallaDescansoVisual extends StatefulWidget {
 }
 
 class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
-  final int _totalSeconds =
+  final int _totalSegundos =
       20; // 20 segundos de duración según la regla 20-20-20
-  int _remainingSeconds =
+  int _segundosRestantes =
       20; // Segundos restantes que se actualizan en el temporizador
-  bool _isRunning = true; // Bandera para indicar si el contador está activo
-  Timer? _timer; // Instancia del temporizador periódico
+  bool _estaEnMarcha = true; // Bandera para indicar si el contador está activo
+  Timer? _temporizador; // Instancia del temporizador periódico
 
   @override
   void initState() {
     super.initState();
-    _startTimer(); // Inicia el temporizador automáticamente al abrir la pantalla
+    _iniciarTemporizador(); // Inicia el temporizador automáticamente al abrir la pantalla
   }
 
   /// Método privado para inicializar el temporizador periódico que descuenta un segundo cada vez.
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() => _remainingSeconds--);
+  void _iniciarTemporizador() {
+    _temporizador = Timer.periodic(const Duration(seconds: 1), (temporizador) {
+      if (_segundosRestantes > 0) {
+        setState(() => _segundosRestantes--);
       } else {
-        _timer?.cancel(); // Detiene el temporizador cuando llega a cero
-        setState(() => _isRunning = false);
+        _temporizador?.cancel(); // Detiene el temporizador cuando llega a cero
+        setState(() => _estaEnMarcha = false);
       }
     });
   }
 
   /// Alterna el estado del temporizador entre en marcha (Play) y pausado (Pause).
-  void _toggleTimer() {
-    if (_isRunning) {
-      _timer?.cancel();
-      setState(() => _isRunning = false);
+  void _alternarTemporizador() {
+    if (_estaEnMarcha) {
+      _temporizador?.cancel();
+      setState(() => _estaEnMarcha = false);
     } else {
-      setState(() => _isRunning = true);
-      _startTimer();
+      setState(() => _estaEnMarcha = true);
+      _iniciarTemporizador();
     }
   }
 
   /// Reinicia el temporizador restableciendo los segundos iniciales y reanudando la cuenta.
-  void _resetTimer() {
-    _timer?.cancel();
+  void _reiniciarTemporizador() {
+    _temporizador?.cancel();
     setState(() {
-      _remainingSeconds = _totalSeconds;
-      _isRunning = true;
+      _segundosRestantes = _totalSegundos;
+      _estaEnMarcha = true;
     });
-    _startTimer();
+    _iniciarTemporizador();
   }
 
   @override
   void dispose() {
-    _timer?.cancel(); // Libera el temporizador para prevenir fugas de memoria al cerrar la pantalla
+    _temporizador?.cancel(); // Libera el temporizador para prevenir fugas de memoria al cerrar la pantalla
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final esquemaColores = Theme.of(context).colorScheme;
+    final temaTexto = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -83,14 +83,14 @@ class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
+                  color: esquemaColores.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '👁️ 94%',
-                  style: textTheme.labelMedium?.copyWith(
+                  style: temaTexto.labelMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: colorScheme.onPrimaryContainer,
+                    color: esquemaColores.onPrimaryContainer,
                   ),
                 ),
               ),
@@ -109,24 +109,26 @@ class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
             Text(
               'Mira a un punto a 6 metros (20 pies)',
               textAlign: TextAlign.center,
-              style: textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+              style: temaTexto.titleMedium?.copyWith(
+                color: esquemaColores.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 32),
 
             // Muestra de forma destacada el contador de segundos restantes (ej. "20s")
             Text(
-              '${_remainingSeconds}s',
-              style: textTheme.displayLarge?.copyWith(
+              '${_segundosRestantes}s',
+              style: temaTexto.displayLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: colorScheme.primary,
+                color: esquemaColores.primary,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Regla 20-20-20',
-              style: textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
+              style: temaTexto.bodyMedium?.copyWith(
+                color: esquemaColores.outline,
+              ),
             ),
 
             const Spacer(),
@@ -137,14 +139,14 @@ class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
               children: [
                 IconButton.filledTonal(
                   iconSize: 32,
-                  icon: Icon(_isRunning ? Icons.pause : Icons.play_arrow),
-                  onPressed: _toggleTimer,
+                  icon: Icon(_estaEnMarcha ? Icons.pause : Icons.play_arrow),
+                  onPressed: _alternarTemporizador,
                 ),
                 const SizedBox(width: 24),
                 IconButton.outlined(
                   iconSize: 28,
                   icon: const Icon(Icons.refresh),
-                  onPressed: _resetTimer,
+                  onPressed: _reiniciarTemporizador,
                 ),
               ],
             ),

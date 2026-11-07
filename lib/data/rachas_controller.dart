@@ -21,8 +21,8 @@ class RachasController extends ChangeNotifier {
       _fechaInicio.day,
     );
 
-    final diff = hoy.difference(inicio).inDays;
-    return diff >= 0 ? diff + 1 : 0;
+    final diferenciaDias = hoy.difference(inicio).inDays;
+    return diferenciaDias >= 0 ? diferenciaDias + 1 : 0;
   }
 
   /// La mayor racha siempre es al menos tan grande como la racha actual conseguida.
@@ -31,12 +31,12 @@ class RachasController extends ChangeNotifier {
     return actual > _mayorRachaManual ? actual : _mayorRachaManual;
   }
 
-  void setFechaInicio(DateTime nuevaFecha) {
+  void establecerFechaInicio(DateTime nuevaFecha) {
     _fechaInicio = nuevaFecha;
     notifyListeners();
   }
 
-  void setMayorRacha(int maximo) {
+  void establecerMayorRacha(int maximo) {
     _mayorRachaManual = maximo;
     notifyListeners();
   }

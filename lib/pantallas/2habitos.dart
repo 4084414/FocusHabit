@@ -17,21 +17,21 @@ class PantallaHabitos extends StatefulWidget {
 
 class _PantallaHabitosState extends State<PantallaHabitos> {
   // Nodo de foco para capturar eventos del teclado directamente en la pantalla
-  final FocusNode _focusNode = FocusNode();
-  final _habitosController = HabitosController.instance;
+  final FocusNode _nodoFoco = FocusNode();
+  final _controladorHabitos = HabitosController.instance;
 
   @override
   void initState() {
     super.initState();
     // Solicita el foco automáticamente al cargar la pantalla para activar los atajos de teclado
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focusNode.requestFocus();
+      if (mounted) _nodoFoco.requestFocus();
     });
   }
 
   @override
   void dispose() {
-    _focusNode.dispose(); // Libera el nodo de foco al destruir el widget
+    _nodoFoco.dispose(); // Libera el nodo de foco al destruir el widget
     super.dispose();
   }
 
@@ -48,21 +48,21 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
         MaterialPageRoute(builder: (context) => const PantallaNuevoHabito()),
       );
       if (nuevoHabito != null && mounted) {
-        _habitosController.addHabito(
+        _controladorHabitos.agregarHabito(
           nuevoHabito,
         ); // Agrega el hábito creado al controlador
       }
     } finally {
       _abriendoNuevoHabito = false;
       if (mounted) {
-        _focusNode.requestFocus(); // Restaura el foco al volver
+        _nodoFoco.requestFocus(); // Restaura el foco al volver
       }
     }
   }
 
   /// Abre la pantalla de edición para un hábito existente y procesa la actualización o borrado.
-  Future<void> _editarHabito(BuildContext context, int index) async {
-    final habitoActual = _habitosController.habits[index];
+  Future<void> _editarHabito(BuildContext context, int indice) async {
+    final habitoActual = _controladorHabitos.habitos[indice];
     final resultado = await Navigator.push<Map<String, String>>(
       context,
 
@@ -71,11 +71,11 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
       ),
     );
     if (resultado != null && mounted) {
-      if (resultado['action'] == 'delete') {
-        _eliminarHabito(index, habitoActual);
+      if (resultado['accion'] == 'borrar') {
+        _eliminarHabito(indice, habitoActual);
       } else {
-        _habitosController.updateHabito(
-          index,
+        _controladorHabitos.actualizarHabito(
+          indice,
           resultado,
         ); // Actualiza el hábito modificado
       }
@@ -83,21 +83,21 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
   }
 
   /// Elimina un hábito de la lista y muestra un SnackBar flotante con opción de "Deshacer".
-  void _eliminarHabito(int index, Map<String, String> habitEliminado) {
-    _habitosController.removeHabitoAt(index);
+  void _eliminarHabito(int indice, Map<String, String> habitoEliminado) {
+    _controladorHabitos.eliminarHabitoEnIndice(indice);
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         persist: false,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
-        content: Text('Hábito "${habitEliminado['title']}" eliminado'),
+        content: Text('Hábito "${habitoEliminado['titulo']}" eliminado'),
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () {
-            _habitosController.insertHabito(
-              index,
-              habitEliminado,
+            _controladorHabitos.insertarHabito(
+              indice,
+              habitoEliminado,
             ); // Restaura el hábito si pulsa deshacer
           },
         ),
@@ -106,13 +106,13 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
   }
 
   /// Muestra un diálogo de confirmación antes de eliminar permanentemente un hábito.
-  Future<void> _confirmarBorrado(BuildContext context, int index) async {
-    final habit = _habitosController.habits[index];
+  Future<void> _confirmarBorrado(BuildContext context, int indice) async {
+    final habito = _controladorHabitos.habitos[indice];
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Borrar hábito'),
-        content: Text('¿Seguro que deseas eliminar "${habit['title']}"?'),
+        content: Text('¿Seguro que deseas eliminar "${habito['titulo']}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -131,7 +131,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
     );
 
     if (confirmar == true && mounted) {
-      _eliminarHabito(index, habit);
+      _eliminarHabito(indice, habito);
     }
   }
 
@@ -153,13 +153,13 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final esquemaColores = Theme.of(context).colorScheme;
 
     // Asegura que el foco permanezca en la pantalla si se pierde
-    if (!_focusNode.hasFocus) {
+    if (!_nodoFoco.hasFocus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_focusNode.hasFocus) {
-          _focusNode.requestFocus();
+        if (mounted && !_nodoFoco.hasFocus) {
+          _nodoFoco.requestFocus();
         }
       });
     }
@@ -175,12 +175,12 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
         },
       },
       child: Focus(
-        focusNode: _focusNode,
+        focusNode: _nodoFoco,
         autofocus: true,
-        onKeyEvent: (node, event) {
+        onKeyEvent: (nodo, evento) {
           // Detecta si se presiona la tecla 'N' sin modificadores activos
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.keyN &&
+          if (evento is KeyDownEvent &&
+              evento.logicalKey == LogicalKeyboardKey.keyN &&
               !HardwareKeyboard.instance.isControlPressed &&
               !HardwareKeyboard.instance.isAltPressed &&
               !HardwareKeyboard.instance.isMetaPressed) {
@@ -191,8 +191,8 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
         },
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
-          onTap: () => _focusNode
-              .requestFocus(), // Vuelve a enfocar al tocar la pantalla
+          onTap: () =>
+              _nodoFoco.requestFocus(), // Vuelve a enfocar al tocar la pantalla
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Hábitos'),
@@ -210,12 +210,12 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
               ],
             ),
             body: ListenableBuilder(
-              listenable: _habitosController,
+              listenable: _controladorHabitos,
               builder: (context, _) {
-                final habits = _habitosController.habits;
+                final habitos = _controladorHabitos.habitos;
 
                 // Muestra un mensaje central si no hay hábitos registrados
-                if (habits.isEmpty) {
+                if (habitos.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -223,13 +223,17 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
                         Icon(
                           Icons.check_circle_outline,
                           size: 64,
-                          color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                          color: esquemaColores.onSurfaceVariant.withOpacity(
+                            0.5,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No tienes hábitos activos',
                           style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                              ?.copyWith(
+                                color: esquemaColores.onSurfaceVariant,
+                              ),
                         ),
                       ],
                     ),
@@ -244,16 +248,16 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
                     top: 16,
                     bottom: 120,
                   ),
-                  itemCount: habits.length,
+                  itemCount: habitos.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final habit = habits[index];
-                    final isCompleted = habit['completed'] == 'true';
+                  itemBuilder: (context, indice) {
+                    final habito = habitos[indice];
+                    final estaCompletado = habito['completado'] == 'true';
 
                     return Card(
-                      elevation: isCompleted ? 0 : 1,
-                      color: isCompleted
-                          ? colorScheme.surfaceContainerHighest.withValues(
+                      elevation: estaCompletado ? 0 : 1,
+                      color: estaCompletado
+                          ? esquemaColores.surfaceContainerHighest.withValues(
                               alpha: 0.4,
                             )
                           : null,
@@ -261,36 +265,38 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
                         // Botón de check a la izquierda para alternar el estado completado
                         leading: IconButton(
                           icon: Icon(
-                            isCompleted
+                            estaCompletado
                                 ? Icons.check_circle
                                 : Icons.check_circle_outline,
-                            color: isCompleted
-                                ? colorScheme.primary
-                                : colorScheme.outline,
+                            color: estaCompletado
+                                ? esquemaColores.primary
+                                : esquemaColores.outline,
                           ),
-                          tooltip: isCompleted
+                          tooltip: estaCompletado
                               ? 'Marcar como pendiente'
                               : 'Marcar como completado',
-                          onPressed: () =>
-                              _habitosController.toggleCompletadoAt(index),
+                          onPressed: () => _controladorHabitos
+                              .alternarCompletadoEnIndice(indice),
                         ),
                         // Título del hábito (tachado si está completado)
                         title: Text(
-                          habit['title'] ?? '',
+                          habito['titulo'] ?? '',
                           style: TextStyle(
-                            decoration: isCompleted
+                            decoration: estaCompletado
                                 ? TextDecoration.lineThrough
                                 : null,
-                            color: isCompleted ? colorScheme.outline : null,
+                            color: estaCompletado
+                                ? esquemaColores.outline
+                                : null,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         // Subtítulo con el objetivo del hábito
                         subtitle: Text(
-                          'Objetivo: ${habit['target']}',
+                          'Objetivo: ${habito['objetivo']}',
                           style: TextStyle(
-                            color: isCompleted
-                                ? colorScheme.outline.withValues(alpha: 0.8)
+                            color: estaCompletado
+                                ? esquemaColores.outline.withValues(alpha: 0.8)
                                 : null,
                           ),
                         ),
@@ -301,23 +307,23 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
                             IconButton(
                               icon: Icon(
                                 Icons.edit_outlined,
-                                color: colorScheme.primary,
+                                color: esquemaColores.primary,
                               ),
                               tooltip: 'Editar hábito',
-                              onPressed: () => _editarHabito(context, index),
+                              onPressed: () => _editarHabito(context, indice),
                             ),
                             IconButton(
                               icon: Icon(
                                 Icons.delete_outline,
-                                color: colorScheme.error,
+                                color: esquemaColores.error,
                               ),
                               tooltip: 'Borrar hábito',
                               onPressed: () =>
-                                  _confirmarBorrado(context, index),
+                                  _confirmarBorrado(context, indice),
                             ),
                           ],
                         ),
-                        onTap: () => _editarHabito(context, index),
+                        onTap: () => _editarHabito(context, indice),
                       ),
                     );
                   },

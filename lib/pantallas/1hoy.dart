@@ -20,7 +20,7 @@ class PantallaHoy extends StatefulWidget {
 }
 
 class _PantallaHoyState extends State<PantallaHoy> {
-  int _currentIndex = 0; // Índice de la pestaña seleccionada actualmente
+  int _indiceActual = 0; // Índice de la pestaña seleccionada actualmente
 
   // Lista con las 5 pantallas principales conectadas a la navegación
   final List<Widget> _pantallas = const [
@@ -34,12 +34,12 @@ class _PantallaHoyState extends State<PantallaHoy> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _pantallas),
+      body: IndexedStack(index: _indiceActual, children: _pantallas),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (int index) {
+        selectedIndex: _indiceActual,
+        onDestinationSelected: (int indice) {
           setState(() {
-            _currentIndex = index; // Actualiza la pestaña activa al pulsar
+            _indiceActual = indice; // Actualiza la pestaña activa al pulsar
           });
         },
         destinations: const [
@@ -84,80 +84,83 @@ class _ContenidoHoy extends StatefulWidget {
 }
 
 class _ContenidoHoyState extends State<_ContenidoHoy> {
-  late final stt.SpeechToText _speech;
-  bool _isListening = false; // Bandera para saber si el micrófono está activo
-  String _transcriptionMessage = ''; // Texto reconocido por voz
+  late final stt.SpeechToText _reconocimientoVoz;
+  bool _estaEscuchando =
+      false; // Bandera para saber si el micrófono está activo
+  String _mensajeTranscripcion = ''; // Texto reconocido por voz
 
   @override
   void initState() {
     super.initState();
-    _speech =
+    _reconocimientoVoz =
         stt.SpeechToText(); // Inicializa la librería de reconocimiento de voz
   }
 
   /// Inicia el reconocimiento de voz al mantener presionado el botón flotante.
-  Future<void> _startListening() async {
-    bool available = await _speech.initialize(
-      onError: (val) => print('Error: $val'),
-      onStatus: (val) => print('Status: $val'),
+  Future<void> _iniciarEscucha() async {
+    bool disponible = await _reconocimientoVoz.initialize(
+      onError: (error) => print('Error: $error'),
+      onStatus: (estado) => print('Status: $estado'),
     );
 
-    if (available) {
+    if (disponible) {
       setState(() {
-        _isListening = true;
-        _transcriptionMessage = 'Escuchando... 🎙️';
+        _estaEscuchando = true;
+        _mensajeTranscripcion = 'Escuchando... 🎙️';
       });
 
-      _speech.listen(
+      _reconocimientoVoz.listen(
         localeId: 'es_ES', // Configurado para español de España
-        onResult: (val) {
+        onResult: (resultado) {
           setState(() {
-            _transcriptionMessage = val
+            _mensajeTranscripcion = resultado
                 .recognizedWords; // Actualiza la transcripción en tiempo real
           });
         },
       );
     } else {
       setState(() {
-        _transcriptionMessage = 'El reconocimiento de voz no está disponible';
+        _mensajeTranscripcion = 'El reconocimiento de voz no está disponible';
       });
     }
   }
 
   /// Detiene la escucha al soltar el botón y procesa el comando de voz dictado.
-  Future<void> _stopListening() async {
-    await _speech.stop();
+  Future<void> _detenerEscucha() async {
+    await _reconocimientoVoz.stop();
     setState(() {
-      _isListening = false;
+      _estaEscuchando = false;
     });
 
-    _procesarComandoVoz(_transcriptionMessage);
+    _procesarComandoVoz(_mensajeTranscripcion);
   }
 
   /// Lógica de procesamiento de lenguaje natural básico para interpretar el texto dictado
   /// y marcar automáticamente el hábito correspondiente si coincide.
   void _procesarComandoVoz(String texto) {
-    final textoLower = texto.toLowerCase();
+    final textoMinuscula = texto.toLowerCase();
 
     // Comprueba si la frase contiene instrucciones para marcar un hábito como completado
-    if (textoLower.contains('completado') && textoLower.contains('habito')) {
-      final partes = textoLower.split(RegExp(r'h[áa]bito'));
+    if (textoMinuscula.contains('completado') &&
+        textoMinuscula.contains('habito')) {
+      final partes = textoMinuscula.split(RegExp(r'h[áa]bito'));
       if (partes.length > 1) {
         final nombreObjetivo = partes[1].trim();
 
-        final habitosController = HabitosController.instance;
+        final controladorHabitos = HabitosController.instance;
         // Busca un hábito cuyo título coincida o contenga el nombre dictado
-        final habitoEncontrado = habitosController.habits.firstWhere(
-          (h) => (h['title'] ?? '').toLowerCase().contains(nombreObjetivo),
+        final habitoEncontrado = controladorHabitos.habitos.firstWhere(
+          (habito) =>
+              (habito['titulo'] ?? '').toLowerCase().contains(nombreObjetivo),
           orElse: () => {},
         );
 
         if (habitoEncontrado.isNotEmpty) {
-          if (habitoEncontrado['completed'] != 'true') {
-            habitosController.toggleCompletado(habitoEncontrado);
+          if (habitoEncontrado['completado'] != 'true') {
+            controladorHabitos.alternarCompletado(habitoEncontrado);
           }
           _mostrarSnackBarTemporal(
-            '¡Hábito "${habitoEncontrado['title']}" completado con éxito! ✅',
+            '¡Hábito "${habitoEncontrado['titulo']}" completado con éxito! ✅',
           );
           return;
         }
@@ -184,18 +187,18 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-    final habitosController = HabitosController.instance;
+    final temaTexto = Theme.of(context).textTheme;
+    final esquemaColores = Theme.of(context).colorScheme;
+    final controladorHabitos = HabitosController.instance;
 
     // ListenableBuilder redibuja la pestaña automáticamente cuando cambian los hábitos
     return ListenableBuilder(
-      listenable: habitosController,
+      listenable: controladorHabitos,
       builder: (context, _) {
-        final completados = habitosController.habitosCompletados;
-        final total = habitosController.totalHabitos;
-        final progreso = habitosController.progreso;
-        final pendientesHoy = habitosController.primerosTresSinCompletar;
+        final completados = controladorHabitos.habitosCompletados;
+        final total = controladorHabitos.totalHabitos;
+        final progreso = controladorHabitos.progreso;
+        final pendientesHoy = controladorHabitos.primerosTresSinCompletar;
 
         return Scaffold(
           appBar: AppBar(
@@ -224,31 +227,31 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
             children: [
               Text(
                 '¡Hola de nuevo! 👋',
-                style: textTheme.headlineMedium?.copyWith(
+                style: temaTexto.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 20),
 
               // Contenedor animado que muestra el mensaje de voz actual o estado de escucha
-              if (_isListening || _transcriptionMessage.isNotEmpty)
+              if (_estaEscuchando || _mensajeTranscripcion.isNotEmpty)
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withOpacity(0.5),
+                    color: esquemaColores.primaryContainer.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colorScheme.primary),
+                    border: Border.all(color: esquemaColores.primary),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.mic, color: colorScheme.primary),
+                      Icon(Icons.mic, color: esquemaColores.primary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          _transcriptionMessage,
-                          style: textTheme.bodyMedium?.copyWith(
+                          _mensajeTranscripcion,
+                          style: temaTexto.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -260,7 +263,7 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
               // Tarjeta visual que muestra el progreso porcentual y la barra de avance
               Card(
                 elevation: 0,
-                color: colorScheme.primaryContainer.withValues(alpha: 0.35),
+                color: esquemaColores.primaryContainer.withValues(alpha: 0.35),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -275,15 +278,15 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
                                 completados == total && total > 0
                                     ? Icons.task_alt
                                     : Icons.pie_chart_outline,
-                                color: colorScheme.primary,
+                                color: esquemaColores.primary,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 'Progreso de hábitos',
-                                style: textTheme.titleSmall?.copyWith(
+                                style: temaTexto.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: colorScheme.onSurface,
+                                  color: esquemaColores.onSurface,
                                 ),
                               ),
                             ],
@@ -294,13 +297,13 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: colorScheme.primary,
+                              color: esquemaColores.primary,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               '$completados de $total completadas',
-                              style: textTheme.labelSmall?.copyWith(
-                                color: colorScheme.onPrimary,
+                              style: temaTexto.labelSmall?.copyWith(
+                                color: esquemaColores.onPrimary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -313,9 +316,10 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
                         child: LinearProgressIndicator(
                           value: progreso,
                           minHeight: 8,
-                          backgroundColor: colorScheme.surfaceContainerHighest,
+                          backgroundColor:
+                              esquemaColores.surfaceContainerHighest,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            colorScheme.primary,
+                            esquemaColores.primary,
                           ),
                         ),
                       ),
@@ -324,8 +328,8 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
                         completados == total && total > 0
                             ? '¡Increíble! Has completado todos los hábitos de tu lista 🎉'
                             : 'Llevas el ${(progreso * 100).round()}% de tus hábitos completados hoy',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                        style: temaTexto.bodySmall?.copyWith(
+                          color: esquemaColores.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -336,15 +340,15 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
 
               Text(
                 'Hábitos de hoy',
-                style: textTheme.titleMedium?.copyWith(
+                style: temaTexto.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Tus próximos 3 hábitos pendientes de la lista',
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                style: temaTexto.bodySmall?.copyWith(
+                  color: esquemaColores.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 12),
@@ -353,7 +357,7 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
               if (pendientesHoy.isEmpty)
                 Card(
                   elevation: 0,
-                  color: colorScheme.surfaceContainerHighest.withValues(
+                  color: esquemaColores.surfaceContainerHighest.withValues(
                     alpha: 0.4,
                   ),
                   child: Padding(
@@ -365,12 +369,12 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
                           Icon(
                             Icons.check_circle,
                             size: 48,
-                            color: colorScheme.primary,
+                            color: esquemaColores.primary,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             '¡Todos los hábitos completados!',
-                            style: textTheme.titleMedium?.copyWith(
+                            style: temaTexto.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                             textAlign: TextAlign.center,
@@ -382,30 +386,34 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
                 )
               else
                 ...pendientesHoy.map((habito) {
-                  final categoryIcon = HabitosController.getIconForCategory(
-                    habito['category'],
-                  );
+                  final iconoCategoria =
+                      HabitosController.obtenerIconoPorCategoria(
+                        habito['categoria'],
+                      );
 
                   return Card(
                     child: ListTile(
-                      leading: Icon(categoryIcon, color: colorScheme.primary),
+                      leading: Icon(
+                        iconoCategoria,
+                        color: esquemaColores.primary,
+                      ),
                       title: Text(
-                        habito['title'] ?? '',
+                        habito['titulo'] ?? '',
                         style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                       subtitle: Text(
-                        'Objetivo: ${habito['target']} · ${habito['category']}',
+                        'Objetivo: ${habito['objetivo']} · ${habito['categoria']}',
                       ),
                       trailing: IconButton(
                         icon: const Icon(Icons.check_circle_outline),
                         tooltip: 'Marcar como completado',
-                        color: colorScheme.primary,
+                        color: esquemaColores.primary,
                         onPressed: () {
-                          habitosController.toggleCompletado(habito);
+                          controladorHabitos.alternarCompletado(habito);
                         },
                       ),
                       onTap: () {
-                        habitosController.toggleCompletado(habito);
+                        controladorHabitos.alternarCompletado(habito);
                       },
                     ),
                   );
@@ -417,18 +425,18 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
             mainAxisSize: MainAxisSize.min,
             children: [
               GestureDetector(
-                onLongPressStart: (_) => _startListening(),
-                onLongPressEnd: (_) => _stopListening(),
+                onLongPressStart: (_) => _iniciarEscucha(),
+                onLongPressEnd: (_) => _detenerEscucha(),
                 child: FloatingActionButton(
                   heroTag: 'fab_voice',
                   onPressed:
                       () {}, // Callback obligatorio requerido por Flutter
-                  backgroundColor: _isListening
+                  backgroundColor: _estaEscuchando
                       ? Colors.redAccent
-                      : colorScheme.primary,
-                  foregroundColor: colorScheme.onPrimary,
+                      : esquemaColores.primary,
+                  foregroundColor: esquemaColores.onPrimary,
                   tooltip: 'Mantén presionado para dictar',
-                  child: Icon(_isListening ? Icons.mic : Icons.mic_none),
+                  child: Icon(_estaEscuchando ? Icons.mic : Icons.mic_none),
                 ),
               ),
               const SizedBox(width: 12),
