@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '2habitos.dart'; // Importamos la pantalla de hábitos
+import '2habitos.dart';
+import '5rachas.dart';
+import '9estadisticas.dart';
+import '10ajustes.dart';
 
 class PantallaHoy extends StatefulWidget {
   const PantallaHoy({super.key});
@@ -12,12 +15,13 @@ class PantallaHoy extends StatefulWidget {
 class _PantallaHoyState extends State<PantallaHoy> {
   int _currentIndex = 0;
 
-  // Lista de pantallas para cada pestaña
+  // Lista con las 5 pantallas conectadas
   final List<Widget> _pantallas = const [
     _ContenidoHoy(),
-    PantallaHabitos(), // <--- Conectado aquí
-    _PantallaPlaceholder(titulo: 'Estadísticas'),
-    _PantallaPlaceholder(titulo: 'Ajustes'),
+    PantallaHabitos(),
+    PantallaEstadisticas(),
+    PantallaRachas(), // <--- Nueva pantalla añadida antes de Ajustes
+    PantallaAjustes(),
   ];
 
   @override
@@ -46,6 +50,11 @@ class _PantallaHoyState extends State<PantallaHoy> {
             icon: Icon(Icons.bar_chart_outlined),
             selectedIcon: Icon(Icons.bar_chart),
             label: 'Stats',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.local_fire_department_outlined),
+            selectedIcon: Icon(Icons.local_fire_department),
+            label: 'Rachas',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
@@ -100,26 +109,6 @@ class _ContenidoHoy extends StatelessWidget {
           const HabitCard(title: 'Hacer ejercicio', icon: Icons.fitness_center),
           const HabitCard(title: 'Leer 15 minutos', icon: Icons.book),
         ],
-      ),
-    );
-  }
-}
-
-/// Vista temporal para las pestañas en desarrollo
-class _PantallaPlaceholder extends StatelessWidget {
-  final String titulo;
-
-  const _PantallaPlaceholder({required this.titulo});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(titulo)),
-      body: Center(
-        child: Text(
-          'Pantalla de $titulo',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
       ),
     );
   }

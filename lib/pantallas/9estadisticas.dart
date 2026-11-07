@@ -54,10 +54,19 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Card(
       child: ListTile(
-        leading: Icon(icon),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        leading: Icon(
+          icon,
+          color: colorScheme.primary, // Aplica el verde #2E7D6B del tema
+        ),
+        title: Text(
+          title,
+          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
         subtitle: Text(value),
       ),
     );

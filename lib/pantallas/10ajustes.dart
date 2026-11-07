@@ -13,6 +13,8 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Ajustes y Configuración')),
       body: ListView(
@@ -20,7 +22,10 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
         children: [
           // 1. Notificaciones
           SwitchListTile(
-            secondary: const Icon(Icons.notifications_none_outlined),
+            secondary: Icon(
+              Icons.notifications_none_outlined,
+              color: colorScheme.primary,
+            ),
             title: const Text('Notificaciones y Alertas'),
             value: _notificationsEnabled,
             onChanged: (val) => setState(() => _notificationsEnabled = val),
@@ -28,18 +33,21 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
 
           // 2. Tema Oscuro
           SwitchListTile(
-            secondary: const Icon(Icons.dark_mode_outlined),
+            secondary: Icon(
+              Icons.dark_mode_outlined,
+              color: colorScheme.primary,
+            ),
             title: const Text('Tema Oscuro'),
             value: _isDarkMode,
             onChanged: (val) => setState(() => _isDarkMode = val),
           ),
 
-          // 3. Borrar datos (Simple, sin diálogos complejos)
+          // 3. Borrar datos
           ListTile(
-            leading: const Icon(Icons.delete_outline, color: Colors.red),
-            title: const Text(
+            leading: Icon(Icons.delete_outline, color: colorScheme.error),
+            title: Text(
               'Borrar Datos de Usuario',
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: colorScheme.error),
             ),
             onTap: () {},
           ),

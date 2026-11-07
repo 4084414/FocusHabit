@@ -5,13 +5,16 @@ class PantallaRachas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Rachas y Progreso')),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
-        children: const [
+        children: [
           // 1. Tarjetas de estadísticas de racha
-          Row(
+          const Row(
             children: [
               Expanded(
                 child: StatCard(
@@ -30,17 +33,19 @@ class PantallaRachas extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
 
           // 2. Resumen del mes simplificado
           Text(
             'Noviembre 2026',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             '75% completado este mes',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -62,6 +67,9 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -71,14 +79,28 @@ class StatCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: const TextStyle(color: Colors.grey)),
-                Icon(icon, size: 22),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  icon,
+                  size: 22,
+                  color: colorScheme.primary, // Usa el verde #2E7D6B del tema
+                ),
               ],
             ),
             const SizedBox(height: 12),
             Text(
               value,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
