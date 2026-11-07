@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:focushabit/data/theme_controller.dart';
 
 import '../data/rachas_controller.dart';
 
@@ -39,7 +40,9 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
 
   Future<void> _editarMayorRacha(BuildContext context) async {
     final rachas = RachasController.instance;
-    final controller = TextEditingController(text: rachas.mayorRacha.toString());
+    final controller = TextEditingController(
+      text: rachas.mayorRacha.toString(),
+    );
 
     final nuevoValor = await showDialog<int>(
       context: context,
@@ -91,11 +94,16 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final rachas = RachasController.instance;
+    final themeController =
+        ThemeController.instance; // <--- Instancia del controlador
 
     return Scaffold(
       appBar: AppBar(title: const Text('Ajustes y Configuración')),
       body: ListenableBuilder(
-        listenable: rachas,
+        listenable: Listenable.merge([
+          rachas,
+          themeController,
+        ]), // <--- Escucha ambos controladores
         builder: (context, _) {
           return ListView(
             padding: const EdgeInsets.all(8.0),
@@ -111,22 +119,30 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
                 onChanged: (val) => setState(() => _notificationsEnabled = val),
               ),
 
-              // 2. Tema Oscuro
+              // 2. Tema Oscuro (Conectado al ThemeController)
               SwitchListTile(
                 secondary: Icon(
                   Icons.dark_mode_outlined,
                   color: colorScheme.primary,
                 ),
                 title: const Text('Tema Oscuro'),
-                value: _isDarkMode,
-                onChanged: (val) => setState(() => _isDarkMode = val),
+                value: themeController
+                    .isDarkMode, // <--- Valor real del controlador
+                onChanged: (val) {
+                  themeController.toggleTheme(
+                    val,
+                  ); // <--- Cambia el tema globalmente
+                },
               ),
 
               const Divider(),
 
               // Sección para configurar las rachas (modo simulación / trampa)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
                 child: Row(
                   children: [
                     Icon(

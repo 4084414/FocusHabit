@@ -13,6 +13,7 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
   late final TextEditingController _controller;
   late String _selectedCategory;
   late int _dailyTarget;
+  bool _isCompleted = false;
 
   final List<String> _categories = [
     'Ergonomics',
@@ -44,6 +45,7 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
     final targetStr = habito?['target'] ?? '';
     final match = RegExp(r'\d+').firstMatch(targetStr);
     _dailyTarget = match != null ? (int.tryParse(match.group(0)!) ?? 1) : 1;
+    _isCompleted = habito?['completed'] == 'true';
   }
 
   @override
@@ -61,6 +63,7 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
           ? '1 vez al día'
           : '$_dailyTarget veces al día',
       'category': _selectedCategory,
+      'completed': _isCompleted ? 'true' : 'false',
     };
     Navigator.pop(context, nuevoHabito);
   }
@@ -176,6 +179,23 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
                 ),
               ],
             ),
+
+            if (_esEdicion) ...[
+              const SizedBox(height: 16),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Hábito completado hoy'),
+                subtitle: Text(_isCompleted ? 'Completado' : 'Pendiente'),
+                value: _isCompleted,
+                secondary: Icon(
+                  _isCompleted ? Icons.check_circle : Icons.check_circle_outline,
+                  color: _isCompleted
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
+                ),
+                onChanged: (val) => setState(() => _isCompleted = val),
+              ),
+            ],
             const Spacer(),
 
             // 4. Botón de guardar

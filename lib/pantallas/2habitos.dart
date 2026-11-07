@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../data/habitos_controller.dart';
 import '3newhabito.dart';
 import '4categorias.dart';
 import '8descanso.dart';
@@ -14,6 +15,7 @@ class PantallaHabitos extends StatefulWidget {
 
 class _PantallaHabitosState extends State<PantallaHabitos> {
   final FocusNode _focusNode = FocusNode();
+  final _habitosController = HabitosController.instance;
 
   @override
   void initState() {
@@ -28,59 +30,6 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
     _focusNode.dispose();
     super.dispose();
   }
-  // Lista mutable de hábitos
-  final List<Map<String, String>> _habits = [
-    {
-      'title': 'Postura recta en la silla',
-      'target': '1 min cada hora',
-      'category': 'Ergonomics',
-    },
-    {
-      'title': 'Regla 20-20-20 (descanso visual)',
-      'target': '20 seg cada 20 min',
-      'category': 'Eye Care',
-    },
-    {
-      'title': 'Vaso de agua al despertar',
-      'target': '1 vez al día',
-      'category': 'Hydration',
-    },
-    {
-      'title': 'Pausa activa y estiramientos',
-      'target': '3 veces al día',
-      'category': 'Ergonomics',
-    },
-    {
-      'title': 'Bloque de enfoque profundo (Pomodoro)',
-      'target': '4 veces al día',
-      'category': 'Focus',
-    },
-    {
-      'title': 'Parpadeo consciente e hidratación ocular',
-      'target': '5 min al día',
-      'category': 'Eye Care',
-    },
-    {
-      'title': 'Caminar o subir escaleras',
-      'target': '2 veces al día',
-      'category': 'Fitness',
-    },
-    {
-      'title': 'Beber agua durante la jornada',
-      'target': '8 veces al día',
-      'category': 'Hydration',
-    },
-    {
-      'title': 'Desconectar pantallas antes de dormir',
-      'target': '1 vez al día',
-      'category': 'Sleep',
-    },
-    {
-      'title': 'Ajustar brillo y distancia del monitor',
-      'target': '1 vez al día',
-      'category': 'Ergonomics',
-    },
-  ];
 
   bool _abriendoNuevoHabito = false;
 
@@ -94,9 +43,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
         MaterialPageRoute(builder: (context) => const PantallaNuevoHabito()),
       );
       if (nuevoHabito != null && mounted) {
-        setState(() {
-          _habits.add(nuevoHabito);
-        });
+        _habitosController.addHabito(nuevoHabito);
       }
     } finally {
       _abriendoNuevoHabito = false;
@@ -108,7 +55,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
 
   // Editar un hábito existente en 3newhabito.dart
   Future<void> _editarHabito(BuildContext context, int index) async {
-    final habitoActual = _habits[index];
+    final habitoActual = _habitosController.habits[index];
     final resultado = await Navigator.push<Map<String, String>>(
       context,
       MaterialPageRoute(
@@ -119,17 +66,13 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
       if (resultado['action'] == 'delete') {
         _eliminarHabito(index, habitoActual);
       } else {
-        setState(() {
-          _habits[index] = resultado;
-        });
+        _habitosController.updateHabito(index, resultado);
       }
     }
   }
 
   void _eliminarHabito(int index, Map<String, String> habitEliminado) {
-    setState(() {
-      _habits.removeAt(index);
-    });
+    _habitosController.removeHabitoAt(index);
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -140,9 +83,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () {
-            setState(() {
-              _habits.insert(index, habitEliminado);
-            });
+            _habitosController.insertHabito(index, habitEliminado);
           },
         ),
       ),
@@ -150,7 +91,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
   }
 
   Future<void> _confirmarBorrado(BuildContext context, int index) async {
-    final habit = _habits[index];
+    final habit = _habitosController.habits[index];
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -246,8 +187,12 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
                 ),
               ],
             ),
-      body: _habits.isEmpty
-          ? Center(
+      body: ListenableBuilder(
+        listenable: _habitosController,
+        builder: (context, _) {
+          final habits = _habitosController.habits;
+          if (habits.isEmpty) {
+            return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -265,52 +210,88 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
                   ),
                 ],
               ),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: 120,
-              ),
-              itemCount: _habits.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final habit = _habits[index];
-                return Card(
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.check_circle_outline,
-                      color: colorScheme.primary,
-                    ),
-                    title: Text(habit['title'] ?? ''),
-                    subtitle: Text('Objetivo: ${habit['target']}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.edit_outlined,
-                            color: colorScheme.primary,
-                          ),
-                          tooltip: 'Editar hábito',
-                          onPressed: () => _editarHabito(context, index),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.delete_outline,
-                            color: colorScheme.error,
-                          ),
-                          tooltip: 'Borrar hábito',
-                          onPressed: () => _confirmarBorrado(context, index),
-                        ),
-                      ],
-                    ),
-                    onTap: () => _editarHabito(context, index),
-                  ),
-                );
-              },
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: 120,
             ),
+            itemCount: habits.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final habit = habits[index];
+              final isCompleted = habit['completed'] == 'true';
+
+              return Card(
+                elevation: isCompleted ? 0 : 1,
+                color: isCompleted
+                    ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+                    : null,
+                child: ListTile(
+                  leading: IconButton(
+                    icon: Icon(
+                      isCompleted
+                          ? Icons.check_circle
+                          : Icons.check_circle_outline,
+                      color: isCompleted
+                          ? colorScheme.primary
+                          : colorScheme.outline,
+                    ),
+                    tooltip: isCompleted
+                        ? 'Marcar como pendiente'
+                        : 'Marcar como completado',
+                    onPressed: () =>
+                        _habitosController.toggleCompletadoAt(index),
+                  ),
+                  title: Text(
+                    habit['title'] ?? '',
+                    style: TextStyle(
+                      decoration:
+                          isCompleted ? TextDecoration.lineThrough : null,
+                      color: isCompleted ? colorScheme.outline : null,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Objetivo: ${habit['target']}',
+                    style: TextStyle(
+                      color: isCompleted
+                          ? colorScheme.outline.withValues(alpha: 0.8)
+                          : null,
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          color: colorScheme.primary,
+                        ),
+                        tooltip: 'Editar hábito',
+                        onPressed: () => _editarHabito(context, index),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: colorScheme.error,
+                        ),
+                        tooltip: 'Borrar hábito',
+                        onPressed: () => _confirmarBorrado(context, index),
+                      ),
+                    ],
+                  ),
+                  onTap: () => _editarHabito(context, index),
+                ),
+              );
+            },
+          );
+        },
+      ),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,

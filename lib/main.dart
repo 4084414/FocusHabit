@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:focushabit/data/theme_controller.dart';
 
 import 'pantallas/1hoy.dart';
 
@@ -36,14 +37,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Focus Habit',
-      debugShowCheckedModeBanner: false,
-      theme: FocusHabitTheme.light,
-      darkTheme: FocusHabitTheme.dark,
-      themeMode:
-          ThemeMode.system, // Cambia automáticamente según el modo del sistema
-      home: const PantallaHoy(),
+    return ListenableBuilder(
+      listenable: ThemeController.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Focus Habit',
+          debugShowCheckedModeBanner: false,
+          theme: FocusHabitTheme.light,
+          darkTheme: FocusHabitTheme.dark,
+          themeMode: ThemeController.instance.themeMode, // <--- Conectado aquí
+          home: const PantallaHoy(),
+        );
+      },
     );
   }
 }
