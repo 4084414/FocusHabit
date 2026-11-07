@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 class PantallaAlertasPostura extends StatelessWidget {
   const PantallaAlertasPostura({super.key});
 
-  final List<Map<String, String>> _alerts = const [
+  final List<Map<String, dynamic>> _alerts = const [
     {
       'issue': 'Inclinación de cabeza pronunciada',
       'timestamp': '11:42 AM',
-      'severity': 'high', // 'high' = rojo, 'medium' = ámbar
+      'severity': 'high',
       'duration': '3 min',
     },
     {
@@ -45,19 +45,17 @@ class PantallaAlertasPostura extends StatelessWidget {
           final isHighSeverity = alert['severity'] == 'high';
           final isLast = index == _alerts.length - 1;
 
-          // Colores suaves para alertas según severidad
           final warningColor = isHighSeverity
               ? Colors.red.shade400
               : Colors.amber.shade700;
           final backgroundColor = isHighSeverity
-              ? Colors.red.withAlpha(25)
-              : Colors.amber.withAlpha(25);
+              ? Colors.red.withValues(alpha: 0.1)
+              : Colors.amber.withValues(alpha: 0.1);
 
           return IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Eje vertical del Timeline (Icono + Línea conectora)
                 Column(
                   children: [
                     Container(
@@ -85,7 +83,6 @@ class PantallaAlertasPostura extends StatelessWidget {
                 ),
                 const SizedBox(width: 16),
 
-                // 2. Contenido de la alerta
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 24.0),

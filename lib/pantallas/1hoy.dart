@@ -4,6 +4,7 @@ import '2habitos.dart';
 import '5rachas.dart';
 import '9estadisticas.dart';
 import '10ajustes.dart';
+import '6sesionestudio.dart';
 
 class PantallaHoy extends StatefulWidget {
   const PantallaHoy({super.key});
@@ -20,7 +21,7 @@ class _PantallaHoyState extends State<PantallaHoy> {
     _ContenidoHoy(),
     PantallaHabitos(),
     PantallaEstadisticas(),
-    PantallaRachas(), // <--- Nueva pantalla añadida antes de Ajustes
+    PantallaRachas(),
     PantallaAjustes(),
   ];
 
@@ -109,6 +110,19 @@ class _ContenidoHoy extends StatelessWidget {
           const HabitCard(title: 'Hacer ejercicio', icon: Icons.fitness_center),
           const HabitCard(title: 'Leer 15 minutos', icon: Icons.book),
         ],
+      ),
+      // Botón flotante para iniciar la sesión de estudio / enfoque
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const PantallaSesionEstudio(),
+            ),
+          );
+        },
+        icon: const Icon(Icons.play_arrow),
+        label: const Text('Iniciar Enfoque'),
       ),
     );
   }

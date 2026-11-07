@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class PantallaSesionEstudio extends StatefulWidget {
@@ -11,6 +13,38 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
   bool _isRunning = false;
   final int _totalSeconds = 25 * 60; // 25 minutos
   int _remainingSeconds = 25 * 60;
+  Timer? _timer;
+
+  void _toggleTimer() {
+    if (_isRunning) {
+      _timer?.cancel();
+      setState(() => _isRunning = false);
+    } else {
+      setState(() => _isRunning = true);
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_remainingSeconds > 0) {
+          setState(() => _remainingSeconds--);
+        } else {
+          _timer?.cancel();
+          setState(() => _isRunning = false);
+        }
+      });
+    }
+  }
+
+  void _resetTimer() {
+    _timer?.cancel();
+    setState(() {
+      _isRunning = false;
+      _remainingSeconds = _totalSeconds;
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   String _formatTime(int seconds) {
     final mins = (seconds ~/ 60).toString().padLeft(2, '0');
@@ -20,16 +54,32 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sesión de Enfoque'),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.only(right: 16),
             child: Center(
-              child: Text(
-                '🟢 IA Activa',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '🟢 IA Activa',
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                ),
               ),
             ),
           ),
@@ -42,39 +92,39 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
           children: [
             const Spacer(),
 
-            // Tiempo restante y estado simple
+            // Tiempo restante
             Text(
               _formatTime(_remainingSeconds),
-              style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
+              style: textTheme.displayLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               _isRunning ? 'En curso...' : 'Pausado',
-              style: const TextStyle(fontSize: 18, color: Colors.grey),
+              style: textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
 
             const Spacer(),
 
-            // Botones de control (Reiniciar y Play/Pause)
+            // Botones de control
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      _isRunning = false;
-                      _remainingSeconds = _totalSeconds;
-                    });
-                  },
+                  onPressed: _resetTimer,
+                  style: OutlinedButton.styleFrom(
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(16),
+                  ),
                   child: const Icon(Icons.refresh),
                 ),
                 const SizedBox(width: 24),
-                FloatingActionButton(
-                  onPressed: () {
-                    setState(() {
-                      _isRunning = !_isRunning;
-                    });
-                  },
+                FloatingActionButton.large(
+                  onPressed: _toggleTimer,
                   child: Icon(_isRunning ? Icons.pause : Icons.play_arrow),
                 ),
               ],

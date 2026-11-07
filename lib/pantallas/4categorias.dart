@@ -14,6 +14,9 @@ class PantallaCategorias extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Categorías')),
       body: ListView.builder(
@@ -25,12 +28,22 @@ class PantallaCategorias extends StatelessWidget {
           return Card(
             margin: const EdgeInsets.only(bottom: 8.0),
             child: ListTile(
-              leading: Icon(category['icon']),
-              title: Text(
-                category['name'],
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              leading: Icon(
+                category['icon'] as IconData,
+                color: colorScheme.primary, // Usa el verde #2E7D6B del tema
               ),
-              subtitle: Text('${category['count']} hábitos activos'),
+              title: Text(
+                category['name'] as String,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                '${category['count']} hábitos activos',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {},
             ),

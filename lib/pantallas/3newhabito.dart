@@ -20,7 +20,15 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
   ];
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nuevo Hábito'),
@@ -65,7 +73,7 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Objetivo diario:', style: TextStyle(fontSize: 16)),
+                Text('Objetivo diario:', style: textTheme.bodyLarge),
                 Row(
                   children: [
                     IconButton(
@@ -76,8 +84,7 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
                     ),
                     Text(
                       '$_dailyTarget',
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -94,7 +101,8 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
             // 4. Botón de guardar
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              height: 48,
+              child: FilledButton.icon(
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.save),
                 label: const Text('Guardar Hábito'),
