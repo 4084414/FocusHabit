@@ -31,24 +31,54 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
   // Lista mutable de hábitos
   final List<Map<String, String>> _habits = [
     {
-      'title': 'Postura recta en silla',
+      'title': 'Postura recta en la silla',
       'target': '1 min cada hora',
       'category': 'Ergonomics',
     },
     {
-      'title': 'Regla 20-20-20',
+      'title': 'Regla 20-20-20 (descanso visual)',
       'target': '20 seg cada 20 min',
       'category': 'Eye Care',
     },
     {
-      'title': 'Ajustar altura de monitor',
+      'title': 'Vaso de agua al despertar',
       'target': '1 vez al día',
+      'category': 'Hydration',
+    },
+    {
+      'title': 'Pausa activa y estiramientos',
+      'target': '3 veces al día',
       'category': 'Ergonomics',
     },
     {
-      'title': 'Parpadear conscientemente',
+      'title': 'Bloque de enfoque profundo (Pomodoro)',
+      'target': '4 veces al día',
+      'category': 'Focus',
+    },
+    {
+      'title': 'Parpadeo consciente e hidratación ocular',
       'target': '5 min al día',
       'category': 'Eye Care',
+    },
+    {
+      'title': 'Caminar o subir escaleras',
+      'target': '2 veces al día',
+      'category': 'Fitness',
+    },
+    {
+      'title': 'Beber agua durante la jornada',
+      'target': '8 veces al día',
+      'category': 'Hydration',
+    },
+    {
+      'title': 'Desconectar pantallas antes de dormir',
+      'target': '1 vez al día',
+      'category': 'Sleep',
+    },
+    {
+      'title': 'Ajustar brillo y distancia del monitor',
+      'target': '1 vez al día',
+      'category': 'Ergonomics',
     },
   ];
 

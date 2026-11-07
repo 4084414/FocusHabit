@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/rachas_controller.dart';
 import '2habitos.dart';
 import '5rachas.dart';
 import '9estadisticas.dart';
@@ -79,13 +80,19 @@ class _ContenidoHoy extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hoy'),
-        actions: const [
+        actions: [
           Center(
             child: Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: Text(
-                '🔥 5 days',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              padding: const EdgeInsets.only(right: 16),
+              child: ListenableBuilder(
+                listenable: RachasController.instance,
+                builder: (context, _) {
+                  final racha = RachasController.instance.rachaActual;
+                  return Text(
+                    '🔥 $racha ${racha == 1 ? "día" : "días"}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  );
+                },
               ),
             ),
           ),

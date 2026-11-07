@@ -19,6 +19,8 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
     'Eye Care',
     'Hydration',
     'Focus',
+    'Fitness',
+    'Sleep',
   ];
 
   bool get _esEdicion => widget.habitoAEditar != null;
