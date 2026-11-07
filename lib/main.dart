@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'pantallas/1hoy.dart'; // Asegúrate de ajustar la ruta de importación según tu estructura de carpetas
+import 'pantallas/1hoy.dart';
 
 abstract final class FocusHabitTheme {
   static const Color _seedColor = Color(0xFF2E7D6B);

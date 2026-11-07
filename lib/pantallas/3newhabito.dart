@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 
 class PantallaNuevoHabito extends StatefulWidget {
-  const PantallaNuevoHabito({super.key});
+  final Map<String, String>? habitoAEditar;
+
+  const PantallaNuevoHabito({super.key, this.habitoAEditar});
 
   @override
   State<PantallaNuevoHabito> createState() => _PantallaNuevoHabitoState();
 }
 
 class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
-  final _controller = TextEditingController();
-  String _selectedCategory = 'Ergonomics';
-  int _dailyTarget = 1;
+  late final TextEditingController _controller;
+  late String _selectedCategory;
+  late int _dailyTarget;
 
   final List<String> _categories = [
     'Ergonomics',
@@ -19,10 +21,77 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
     'Focus',
   ];
 
+  bool get _esEdicion => widget.habitoAEditar != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final habito = widget.habitoAEditar;
+    _controller = TextEditingController(text: habito?['title'] ?? '');
+
+    final cat = habito?['category'];
+    if (cat != null && cat.isNotEmpty) {
+      if (!_categories.contains(cat)) {
+        _categories.add(cat);
+      }
+      _selectedCategory = cat;
+    } else {
+      _selectedCategory = 'Ergonomics';
+    }
+
+    final targetStr = habito?['target'] ?? '';
+    final match = RegExp(r'\d+').firstMatch(targetStr);
+    _dailyTarget = match != null ? (int.tryParse(match.group(0)!) ?? 1) : 1;
+  }
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  // Método auxiliar para guardar y devolver el mapa del hábito
+  void _guardarHabito() {
+    if (_controller.text.trim().isEmpty) return;
+    final nuevoHabito = {
+      'title': _controller.text.trim(),
+      'target': _dailyTarget == 1
+          ? '1 vez al día'
+          : '$_dailyTarget veces al día',
+      'category': _selectedCategory,
+    };
+    Navigator.pop(context, nuevoHabito);
+  }
+
+  // Confirmar y solicitar el borrado del hábito
+  Future<void> _confirmarBorrado() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Borrar hábito'),
+        content: Text(
+          '¿Seguro que deseas eliminar "${widget.habitoAEditar?['title']}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Borrar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true && mounted) {
+      Navigator.pop(context, const {'action': 'delete'});
+    }
   }
 
   @override
@@ -31,11 +100,20 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nuevo Hábito'),
+        title: Text(_esEdicion ? 'Editar Hábito' : 'Nuevo Hábito'),
         actions: [
+          if (_esEdicion)
+            IconButton(
+              icon: Icon(
+                Icons.delete_outline,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              tooltip: 'Borrar hábito',
+              onPressed: _confirmarBorrado,
+            ),
           IconButton(
             icon: const Icon(Icons.check),
-            onPressed: () => Navigator.pop(context),
+            onPressed: _guardarHabito,
           ),
         ],
       ),
@@ -103,11 +181,29 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
               width: double.infinity,
               height: 48,
               child: FilledButton.icon(
-                onPressed: () => Navigator.pop(context),
+                onPressed: _guardarHabito,
                 icon: const Icon(Icons.save),
-                label: const Text('Guardar Hábito'),
+                label: Text(_esEdicion ? 'Guardar Cambios' : 'Guardar Hábito'),
               ),
             ),
+            if (_esEdicion) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _confirmarBorrado,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Borrar Hábito'),
+                ),
+              ),
+            ],
           ],
         ),
       ),
