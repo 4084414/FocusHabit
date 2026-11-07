@@ -12,7 +12,6 @@ class PantallaAjustes extends StatefulWidget {
 
 class _PantallaAjustesState extends State<PantallaAjustes> {
   bool _notificationsEnabled = true;
-  bool _isDarkMode = false;
 
   String _formatearFecha(DateTime fecha) {
     final dia = fecha.day.toString().padLeft(2, '0');
