@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '3newhabito.dart';
 import '4categorias.dart';
-import '8descanso.dart'; // Importación añadida
+import '8descanso.dart';
 
 class PantallaHabitos extends StatelessWidget {
   const PantallaHabitos({super.key});
 
-  final List<Map<String, dynamic>> _habits = const [
+  final List<Map<String, String>> _habits = const [
     {
       'title': 'Postura recta en silla',
       'target': '1 min cada hora',
@@ -72,35 +72,51 @@ class PantallaHabitos extends StatelessWidget {
         ],
       ),
       body: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: 120, // Espacio para no tapar los elementos con los FABs
+        ),
         itemCount: _habits.length,
         separatorBuilder: (_, __) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
           final habit = _habits[index];
-          final isEyeCare = habit['category'] == 'Eye Care';
 
           return Card(
             child: ListTile(
-              onTap: isEyeCare ? () => _abrirDescansoVisual(context) : null,
               leading: Icon(
-                isEyeCare ? Icons.visibility : Icons.check_circle_outline,
+                Icons.check_circle_outline,
                 color: colorScheme.primary,
               ),
               title: Text(habit['title'] ?? ''),
               subtitle: Text('Objetivo: ${habit['target']}'),
               trailing: IconButton(
                 icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
-                onPressed: () {
-                  // Acción para editar hábito
-                },
+                onPressed: () {},
               ),
             ),
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _abrirNuevoHabito(context),
-        child: const Icon(Icons.add),
+      // Columna de botones flotantes (FAB de Añadir arriba, FAB de Descanso abajo)
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'fab_add_habit',
+            onPressed: () => _abrirNuevoHabito(context),
+            child: const Icon(Icons.add),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'fab_eye_rest',
+            onPressed: () => _abrirDescansoVisual(context),
+            icon: const Icon(Icons.visibility_outlined),
+            label: const Text('Descanso Visual'),
+          ),
+        ],
       ),
     );
   }
