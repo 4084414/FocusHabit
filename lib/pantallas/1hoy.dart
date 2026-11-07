@@ -10,6 +10,8 @@ import '6sesionestudio.dart';
 
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+/// Pantalla contenedora principal que administra la barra de navegación inferior (BottomNavigationBar)
+/// y cambia entre las 5 secciones de la aplicación mediante un [IndexedStack].
 class PantallaHoy extends StatefulWidget {
   const PantallaHoy({super.key});
 
@@ -18,9 +20,9 @@ class PantallaHoy extends StatefulWidget {
 }
 
 class _PantallaHoyState extends State<PantallaHoy> {
-  int _currentIndex = 0;
+  int _currentIndex = 0; // Índice de la pestaña seleccionada actualmente
 
-  // Lista con las 5 pantallas conectadas
+  // Lista con las 5 pantallas principales conectadas a la navegación
   final List<Widget> _pantallas = const [
     _ContenidoHoy(),
     PantallaHabitos(),
@@ -37,7 +39,7 @@ class _PantallaHoyState extends State<PantallaHoy> {
         selectedIndex: _currentIndex,
         onDestinationSelected: (int index) {
           setState(() {
-            _currentIndex = index;
+            _currentIndex = index; // Actualiza la pestaña activa al pulsar
           });
         },
         destinations: const [
@@ -72,7 +74,8 @@ class _PantallaHoyState extends State<PantallaHoy> {
   }
 }
 
-/// Contenido de la primera pestaña: "Hoy"
+/// Contenido de la primera pestaña: "Hoy", que incluye la barra de progreso,
+/// los hábitos pendientes y el control interactivo por voz (Speech-to-Text).
 class _ContenidoHoy extends StatefulWidget {
   const _ContenidoHoy();
 
@@ -82,16 +85,17 @@ class _ContenidoHoy extends StatefulWidget {
 
 class _ContenidoHoyState extends State<_ContenidoHoy> {
   late final stt.SpeechToText _speech;
-  bool _isListening = false;
-  String _transcriptionMessage = '';
+  bool _isListening = false; // Bandera para saber si el micrófono está activo
+  String _transcriptionMessage = ''; // Texto reconocido por voz
 
   @override
   void initState() {
     super.initState();
-    _speech = stt.SpeechToText();
+    _speech =
+        stt.SpeechToText(); // Inicializa la librería de reconocimiento de voz
   }
 
-  // Iniciar la escucha al mantener presionado el botón
+  /// Inicia el reconocimiento de voz al mantener presionado el botón flotante.
   Future<void> _startListening() async {
     bool available = await _speech.initialize(
       onError: (val) => print('Error: $val'),
@@ -105,10 +109,11 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
       });
 
       _speech.listen(
-        localeId: 'es_ES', // Ajusta según tu idioma preferido
+        localeId: 'es_ES', // Configurado para español de España
         onResult: (val) {
           setState(() {
-            _transcriptionMessage = val.recognizedWords;
+            _transcriptionMessage = val
+                .recognizedWords; // Actualiza la transcripción en tiempo real
           });
         },
       );
@@ -119,7 +124,7 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
     }
   }
 
-  // Detener la escucha al soltar el botón y procesar el comando
+  /// Detiene la escucha al soltar el botón y procesa el comando de voz dictado.
   Future<void> _stopListening() async {
     await _speech.stop();
     setState(() {
@@ -129,26 +134,25 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
     _procesarComandoVoz(_transcriptionMessage);
   }
 
-  // Lógica para interpretar el texto dictado y marcar el hábito
+  /// Lógica de procesamiento de lenguaje natural básico para interpretar el texto dictado
+  /// y marcar automáticamente el hábito correspondiente si coincide.
   void _procesarComandoVoz(String texto) {
     final textoLower = texto.toLowerCase();
 
-    // Verificamos si contiene "completado" y "habito" (o variaciones comunes)
+    // Comprueba si la frase contiene instrucciones para marcar un hábito como completado
     if (textoLower.contains('completado') && textoLower.contains('habito')) {
-      // Extraemos la parte posterior a "hábito" o "habito"
       final partes = textoLower.split(RegExp(r'h[áa]bito'));
       if (partes.length > 1) {
         final nombreObjetivo = partes[1].trim();
 
         final habitosController = HabitosController.instance;
-        // Buscamos un hábito cuyo título coincida (o contenga lo dictado)
+        // Busca un hábito cuyo título coincida o contenga el nombre dictado
         final habitoEncontrado = habitosController.habits.firstWhere(
           (h) => (h['title'] ?? '').toLowerCase().contains(nombreObjetivo),
           orElse: () => {},
         );
 
         if (habitoEncontrado.isNotEmpty) {
-          // Si no estaba completado, lo marcamos
           if (habitoEncontrado['completed'] != 'true') {
             habitosController.toggleCompletado(habitoEncontrado);
           }
@@ -165,6 +169,7 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
     }
   }
 
+  /// Muestra notificaciones flotantes temporales (SnackBars) en pantalla.
   void _mostrarSnackBarTemporal(String mensaje) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -183,6 +188,7 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
     final colorScheme = Theme.of(context).colorScheme;
     final habitosController = HabitosController.instance;
 
+    // ListenableBuilder redibuja la pestaña automáticamente cuando cambian los hábitos
     return ListenableBuilder(
       listenable: habitosController,
       builder: (context, _) {
@@ -198,6 +204,7 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
               Center(
                 child: Padding(
                   padding: const EdgeInsets.only(right: 16),
+                  // ListenableBuilder secundario para actualizar la racha actual en tiempo real
                   child: ListenableBuilder(
                     listenable: RachasController.instance,
                     builder: (context, _) {
@@ -216,14 +223,14 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
             padding: const EdgeInsets.all(16.0),
             children: [
               Text(
-                '¡Hola de novo! 👋',
+                '¡Hola de nuevo! 👋',
                 style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Mensaje flotante temporal de transcripción de voz
+              // Contenedor animado que muestra el mensaje de voz actual o estado de escucha
               if (_isListening || _transcriptionMessage.isNotEmpty)
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
@@ -250,12 +257,10 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
                   ),
                 ),
 
-              // Indicador de tareas completadas del total...
-              // (El resto de widgets de tu tarjeta de progreso y lista se mantienen igual)
+              // Tarjeta visual que muestra el progreso porcentual y la barra de avance
               Card(
                 elevation: 0,
                 color: colorScheme.primaryContainer.withValues(alpha: 0.35),
-                // ...
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -344,6 +349,7 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
               ),
               const SizedBox(height: 12),
 
+              // Si no hay pendientes, muestra un mensaje de felicitación; de lo contrario, lista los 3 primeros
               if (pendientesHoy.isEmpty)
                 Card(
                   elevation: 0,
@@ -406,18 +412,17 @@ class _ContenidoHoyState extends State<_ContenidoHoy> {
                 }),
             ],
           ),
-          // Botones flotantes (Mantener presionado para hablar + Iniciar Enfoque)
+          // Botones flotantes (Mantener presionado para hablar mediante voz + Iniciar sesión de enfoque)
           floatingActionButton: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Botón de voz con GestureDetector para Mantener Presionado (LongPress)
               GestureDetector(
                 onLongPressStart: (_) => _startListening(),
                 onLongPressEnd: (_) => _stopListening(),
                 child: FloatingActionButton(
                   heroTag: 'fab_voice',
                   onPressed:
-                      () {}, // <--- Obligatorio para que no falle y esté activo
+                      () {}, // Callback obligatorio requerido por Flutter
                   backgroundColor: _isListening
                       ? Colors.redAccent
                       : colorScheme.primary,

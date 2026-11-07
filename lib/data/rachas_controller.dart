@@ -15,7 +15,11 @@ class RachasController extends ChangeNotifier {
   int get rachaActual {
     final ahora = DateTime.now();
     final hoy = DateTime(ahora.year, ahora.month, ahora.day);
-    final inicio = DateTime(_fechaInicio.year, _fechaInicio.month, _fechaInicio.day);
+    final inicio = DateTime(
+      _fechaInicio.year,
+      _fechaInicio.month,
+      _fechaInicio.day,
+    );
 
     final diff = hoy.difference(inicio).inDays;
     return diff >= 0 ? diff + 1 : 0;

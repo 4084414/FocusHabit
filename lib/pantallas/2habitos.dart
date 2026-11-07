@@ -6,6 +6,8 @@ import '3newhabito.dart';
 import '4categorias.dart';
 import '8descanso.dart';
 
+/// Pantalla encargada de listar todos los hábitos activos, permitir su creación,
+/// edición, eliminación y marcar su estado completado/pendiente.
 class PantallaHabitos extends StatefulWidget {
   const PantallaHabitos({super.key});
 
@@ -14,12 +16,14 @@ class PantallaHabitos extends StatefulWidget {
 }
 
 class _PantallaHabitosState extends State<PantallaHabitos> {
+  // Nodo de foco para capturar eventos del teclado directamente en la pantalla
   final FocusNode _focusNode = FocusNode();
   final _habitosController = HabitosController.instance;
 
   @override
   void initState() {
     super.initState();
+    // Solicita el foco automáticamente al cargar la pantalla para activar los atajos de teclado
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusNode.requestFocus();
     });
@@ -27,13 +31,14 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    _focusNode.dispose(); // Libera el nodo de foco al destruir el widget
     super.dispose();
   }
 
-  bool _abriendoNuevoHabito = false;
+  bool _abriendoNuevoHabito =
+      false; // Bandera para evitar múltiples aperturas simultáneas
 
-  // Esperar el nuevo hábito devuelto desde 3newhabito.dart
+  /// Método para abrir la pantalla de creación de un nuevo hábito y esperar el resultado.
   Future<void> _abrirNuevoHabito(BuildContext context) async {
     if (_abriendoNuevoHabito) return;
     _abriendoNuevoHabito = true;
@@ -43,21 +48,24 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
         MaterialPageRoute(builder: (context) => const PantallaNuevoHabito()),
       );
       if (nuevoHabito != null && mounted) {
-        _habitosController.addHabito(nuevoHabito);
+        _habitosController.addHabito(
+          nuevoHabito,
+        ); // Agrega el hábito creado al controlador
       }
     } finally {
       _abriendoNuevoHabito = false;
       if (mounted) {
-        _focusNode.requestFocus();
+        _focusNode.requestFocus(); // Restaura el foco al volver
       }
     }
   }
 
-  // Editar un hábito existente en 3newhabito.dart
+  /// Abre la pantalla de edición para un hábito existente y procesa la actualización o borrado.
   Future<void> _editarHabito(BuildContext context, int index) async {
     final habitoActual = _habitosController.habits[index];
     final resultado = await Navigator.push<Map<String, String>>(
       context,
+
       MaterialPageRoute(
         builder: (context) => PantallaNuevoHabito(habitoAEditar: habitoActual),
       ),
@@ -66,11 +74,15 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
       if (resultado['action'] == 'delete') {
         _eliminarHabito(index, habitoActual);
       } else {
-        _habitosController.updateHabito(index, resultado);
+        _habitosController.updateHabito(
+          index,
+          resultado,
+        ); // Actualiza el hábito modificado
       }
     }
   }
 
+  /// Elimina un hábito de la lista y muestra un SnackBar flotante con opción de "Deshacer".
   void _eliminarHabito(int index, Map<String, String> habitEliminado) {
     _habitosController.removeHabitoAt(index);
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -83,13 +95,17 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () {
-            _habitosController.insertHabito(index, habitEliminado);
+            _habitosController.insertHabito(
+              index,
+              habitEliminado,
+            ); // Restaura el hábito si pulsa deshacer
           },
         ),
       ),
     );
   }
 
+  /// Muestra un diálogo de confirmación antes de eliminar permanentemente un hábito.
   Future<void> _confirmarBorrado(BuildContext context, int index) async {
     final habit = _habitosController.habits[index];
     final confirmar = await showDialog<bool>(
@@ -119,6 +135,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
     }
   }
 
+  /// Abre la pantalla de gestión de categorías.
   void _abrirCategorias(BuildContext context) {
     Navigator.push(
       context,
@@ -126,6 +143,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
     );
   }
 
+  /// Abre la pantalla de descanso visual.
   void _abrirDescansoVisual(BuildContext context) {
     Navigator.push(
       context,
@@ -137,6 +155,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
+    // Asegura que el foco permanezca en la pantalla si se pierde
     if (!_focusNode.hasFocus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_focusNode.hasFocus) {
@@ -145,6 +164,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
       });
     }
 
+    // Configura los atajos de teclado (tecla N para crear nuevo hábito)
     return CallbackShortcuts(
       bindings: <ShortcutActivator, VoidCallback>{
         const SingleActivator(LogicalKeyboardKey.keyN): () {
@@ -158,6 +178,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
         focusNode: _focusNode,
         autofocus: true,
         onKeyEvent: (node, event) {
+          // Detecta si se presiona la tecla 'N' sin modificadores activos
           if (event is KeyDownEvent &&
               event.logicalKey == LogicalKeyboardKey.keyN &&
               !HardwareKeyboard.instance.isControlPressed &&
@@ -170,7 +191,8 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
         },
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
-          onTap: () => _focusNode.requestFocus(),
+          onTap: () => _focusNode
+              .requestFocus(), // Vuelve a enfocar al tocar la pantalla
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Hábitos'),
@@ -187,130 +209,141 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
                 ),
               ],
             ),
-      body: ListenableBuilder(
-        listenable: _habitosController,
-        builder: (context, _) {
-          final habits = _habitosController.habits;
-          if (habits.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline,
-                    size: 64,
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No tienes hábitos activos',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+            body: ListenableBuilder(
+              listenable: _habitosController,
+              builder: (context, _) {
+                final habits = _habitosController.habits;
+
+                // Muestra un mensaje central si no hay hábitos registrados
+                if (habits.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 64,
+                          color: colorScheme.onSurfaceVariant.withOpacity(0.5),
                         ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 16,
-              bottom: 120,
-            ),
-            itemCount: habits.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final habit = habits[index];
-              final isCompleted = habit['completed'] == 'true';
-
-              return Card(
-                elevation: isCompleted ? 0 : 1,
-                color: isCompleted
-                    ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
-                    : null,
-                child: ListTile(
-                  leading: IconButton(
-                    icon: Icon(
-                      isCompleted
-                          ? Icons.check_circle
-                          : Icons.check_circle_outline,
-                      color: isCompleted
-                          ? colorScheme.primary
-                          : colorScheme.outline,
+                        const SizedBox(height: 16),
+                        Text(
+                          'No tienes hábitos activos',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                        ),
+                      ],
                     ),
-                    tooltip: isCompleted
-                        ? 'Marcar como pendiente'
-                        : 'Marcar como completado',
-                    onPressed: () =>
-                        _habitosController.toggleCompletadoAt(index),
+                  );
+                }
+
+                // Lista separada con todos los hábitos disponibles
+                return ListView.separated(
+                  padding: const EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 16,
+                    bottom: 120,
                   ),
-                  title: Text(
-                    habit['title'] ?? '',
-                    style: TextStyle(
-                      decoration:
-                          isCompleted ? TextDecoration.lineThrough : null,
-                      color: isCompleted ? colorScheme.outline : null,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Objetivo: ${habit['target']}',
-                    style: TextStyle(
+                  itemCount: habits.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final habit = habits[index];
+                    final isCompleted = habit['completed'] == 'true';
+
+                    return Card(
+                      elevation: isCompleted ? 0 : 1,
                       color: isCompleted
-                          ? colorScheme.outline.withValues(alpha: 0.8)
+                          ? colorScheme.surfaceContainerHighest.withValues(
+                              alpha: 0.4,
+                            )
                           : null,
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.edit_outlined,
-                          color: colorScheme.primary,
+                      child: ListTile(
+                        // Botón de check a la izquierda para alternar el estado completado
+                        leading: IconButton(
+                          icon: Icon(
+                            isCompleted
+                                ? Icons.check_circle
+                                : Icons.check_circle_outline,
+                            color: isCompleted
+                                ? colorScheme.primary
+                                : colorScheme.outline,
+                          ),
+                          tooltip: isCompleted
+                              ? 'Marcar como pendiente'
+                              : 'Marcar como completado',
+                          onPressed: () =>
+                              _habitosController.toggleCompletadoAt(index),
                         ),
-                        tooltip: 'Editar hábito',
-                        onPressed: () => _editarHabito(context, index),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.delete_outline,
-                          color: colorScheme.error,
+                        // Título del hábito (tachado si está completado)
+                        title: Text(
+                          habit['title'] ?? '',
+                          style: TextStyle(
+                            decoration: isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                            color: isCompleted ? colorScheme.outline : null,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        tooltip: 'Borrar hábito',
-                        onPressed: () => _confirmarBorrado(context, index),
+                        // Subtítulo con el objetivo del hábito
+                        subtitle: Text(
+                          'Objetivo: ${habit['target']}',
+                          style: TextStyle(
+                            color: isCompleted
+                                ? colorScheme.outline.withValues(alpha: 0.8)
+                                : null,
+                          ),
+                        ),
+                        // Acciones secundarias (Editar y Borrar)
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                color: colorScheme.primary,
+                              ),
+                              tooltip: 'Editar hábito',
+                              onPressed: () => _editarHabito(context, index),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete_outline,
+                                color: colorScheme.error,
+                              ),
+                              tooltip: 'Borrar hábito',
+                              onPressed: () =>
+                                  _confirmarBorrado(context, index),
+                            ),
+                          ],
+                        ),
+                        onTap: () => _editarHabito(context, index),
                       ),
-                    ],
-                  ),
-                  onTap: () => _editarHabito(context, index),
+                    );
+                  },
+                );
+              },
+            ),
+            // Botones flotantes (FAB) para añadir hábito y acceder al descanso visual
+            floatingActionButton: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'fab_add_habit',
+                  tooltip: 'Añadir hábito (Tecla N)',
+                  onPressed: () => _abrirNuevoHabito(context),
+                  child: const Icon(Icons.add),
                 ),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton.small(
-            heroTag: 'fab_add_habit',
-            tooltip: 'Añadir hábito (Tecla N)',
-            onPressed: () => _abrirNuevoHabito(context),
-            child: const Icon(Icons.add),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            heroTag: 'fab_eye_rest',
-            onPressed: () => _abrirDescansoVisual(context),
-            icon: const Icon(Icons.visibility_outlined),
-            label: const Text('Descanso Visual'),
-          ),
-        ],
-      ),
+                const SizedBox(height: 12),
+                FloatingActionButton.extended(
+                  heroTag: 'fab_eye_rest',
+                  onPressed: () => _abrirDescansoVisual(context),
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: const Text('Descanso Visual'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

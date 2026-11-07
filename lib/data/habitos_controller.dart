@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Controlador singleton para gestionar la lista de hábitos y su estado de completado.
+/// Controlador singleton para gestionar la lista de hábitos, su estado de completado
+/// y los cálculos derivados (progreso, filtros, iconos).
 class HabitosController extends ChangeNotifier {
+  // Patrón Singleton para mantener una única instancia compartida en toda la aplicación.
   static final HabitosController instance = HabitosController._();
   HabitosController._();
 
+  // Lista privada que almacena los hábitos iniciales con sus propiedades.
   final List<Map<String, String>> _habits = [
     {
       'title': 'Postura recta en la silla',
@@ -68,13 +71,17 @@ class HabitosController extends ChangeNotifier {
     },
   ];
 
+  // Getter público para obtener la lista completa de hábitos.
   List<Map<String, String>> get habits => _habits;
 
+  // Retorna la cantidad total de hábitos registrados.
   int get totalHabitos => _habits.length;
 
+  // Cuenta cuántos hábitos tienen el estado 'completed' en 'true'.
   int get habitosCompletados =>
       _habits.where((h) => h['completed'] == 'true').length;
 
+  // Calcula el porcentaje de progreso general (devuelve un valor entre 0.0 y 1.0).
   double get progreso =>
       totalHabitos > 0 ? habitosCompletados / totalHabitos : 0.0;
 
@@ -82,11 +89,13 @@ class HabitosController extends ChangeNotifier {
   List<Map<String, String>> get primerosTresSinCompletar =>
       _habits.where((h) => h['completed'] != 'true').take(3).toList();
 
+  // Agrega un nuevo hábito a la lista y notifica a los oyentes.
   void addHabito(Map<String, String> habito) {
     _habits.add(habito);
     notifyListeners();
   }
 
+  // Actualiza un hábito existente en una posición específica.
   void updateHabito(int index, Map<String, String> habito) {
     if (index >= 0 && index < _habits.length) {
       _habits[index] = habito;
@@ -94,6 +103,7 @@ class HabitosController extends ChangeNotifier {
     }
   }
 
+  // Elimina un hábito según su índice.
   void removeHabitoAt(int index) {
     if (index >= 0 && index < _habits.length) {
       _habits.removeAt(index);
@@ -101,17 +111,20 @@ class HabitosController extends ChangeNotifier {
     }
   }
 
+  // Inserta un hábito en una posición específica.
   void insertHabito(int index, Map<String, String> habito) {
     _habits.insert(index, habito);
     notifyListeners();
   }
 
+  // Alterna el estado de completado (true/false) pasando el mapa del hábito.
   void toggleCompletado(Map<String, String> habito) {
     final isCompleted = habito['completed'] == 'true';
     habito['completed'] = isCompleted ? 'false' : 'true';
     notifyListeners();
   }
 
+  // Alterna el estado de completado mediante el índice del hábito
   void toggleCompletadoAt(int index) {
     if (index >= 0 && index < _habits.length) {
       final isCompleted = _habits[index]['completed'] == 'true';
@@ -120,20 +133,20 @@ class HabitosController extends ChangeNotifier {
     }
   }
 
-  /// Helper para obtener icono según la categoría
+  /// Método auxiliar estático para asignar un icono representativo según la categoría del hábito.
   static IconData getIconForCategory(String? category) {
     switch (category) {
-      case 'Ergonomics':
+      case 'Ergonomía':
         return Icons.chair_alt;
-      case 'Eye Care':
+      case 'Salud visual':
         return Icons.visibility;
-      case 'Hydration':
+      case 'Hidratación':
         return Icons.water_drop;
-      case 'Focus':
+      case 'Enfoque':
         return Icons.psychology;
-      case 'Fitness':
+      case 'Ejercicio':
         return Icons.fitness_center;
-      case 'Sleep':
+      case 'Sueño':
         return Icons.bedtime;
       default:
         return Icons.check_circle_outline;

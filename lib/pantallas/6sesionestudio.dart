@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+/// Pantalla que gestiona una sesión de enfoque (técnica Pomodoro)
+/// permitiendo iniciar, pausar y reiniciar el temporizador de cuenta regresiva.
 class PantallaSesionEstudio extends StatefulWidget {
   const PantallaSesionEstudio({super.key});
 
@@ -10,28 +12,33 @@ class PantallaSesionEstudio extends StatefulWidget {
 }
 
 class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
-  bool _isRunning = false;
-  final int _totalSeconds = 25 * 60; // 25 minutos
-  int _remainingSeconds = 25 * 60;
-  Timer? _timer;
+  bool _isRunning = false; // Indica si el temporizador está activo o pausado
+  final int _totalSeconds =
+      25 * 60; // Duración total de la sesión: 25 minutos en segundos
+  int _remainingSeconds =
+      25 * 60; // Segundos restantes que van disminuyendo en la cuenta atrás
+  Timer? _timer; // Instancia del temporizador periódico
 
+  /// Alterna el estado del temporizador entre en marcha (Play) y pausado (Pause).
   void _toggleTimer() {
     if (_isRunning) {
-      _timer?.cancel();
+      _timer?.cancel(); // Detiene el temporizador si ya estaba corriendo
       setState(() => _isRunning = false);
     } else {
       setState(() => _isRunning = true);
+      // Crea un temporizador que se ejecuta cada 1 segundo exacto
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (_remainingSeconds > 0) {
-          setState(() => _remainingSeconds--);
+          setState(() => _remainingSeconds--); // Decrementa el tiempo restante
         } else {
-          _timer?.cancel();
+          _timer?.cancel(); // Cancela el temporizador al llegar a cero
           setState(() => _isRunning = false);
         }
       });
     }
   }
 
+  /// Reinicia el temporizador a su estado inicial de 25 minutos y lo detiene.
   void _resetTimer() {
     _timer?.cancel();
     setState(() {
@@ -42,10 +49,11 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _timer?.cancel(); // Libera el temporizador para evitar fugas de memoria (memory leaks) al cerrar la pantalla
     super.dispose();
   }
 
+  /// Método auxiliar para formatear los segundos restantes en un string de tipo "MM:SS".
   String _formatTime(int seconds) {
     final mins = (seconds ~/ 60).toString().padLeft(2, '0');
     final secs = (seconds % 60).toString().padLeft(2, '0');
@@ -61,6 +69,7 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
       appBar: AppBar(
         title: const Text('Sesión de Enfoque'),
         actions: [
+          // Indicador visual en la barra superior que muestra el estado activo de la IA
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(
@@ -92,7 +101,7 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
           children: [
             const Spacer(),
 
-            // Tiempo restante
+            // Muestra el tiempo restante formateado de forma destacada (ej. "25:00")
             Text(
               _formatTime(_remainingSeconds),
               style: textTheme.displayLarge?.copyWith(
@@ -101,6 +110,7 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
               ),
             ),
             const SizedBox(height: 8),
+            // Texto descriptivo del estado actual del temporizador ("En curso..." o "Pausado")
             Text(
               _isRunning ? 'En curso...' : 'Pausado',
               style: textTheme.titleMedium?.copyWith(
@@ -110,7 +120,7 @@ class _PantallaSesionEstudioState extends State<PantallaSesionEstudio> {
 
             const Spacer(),
 
-            // Botones de control
+            // Controles de interacción (Botón de Reiniciar y Botón Principal Play/Pause)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

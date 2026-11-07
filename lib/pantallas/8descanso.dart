@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+/// Pantalla encargada de gestionar el ejercicio de descanso visual (regla 20-20-20),
+/// implementando una cuenta regresiva de 20 segundos con opciones de pausa y reinicio.
 class PantallaDescansoVisual extends StatefulWidget {
   const PantallaDescansoVisual({super.key});
 
@@ -10,28 +12,32 @@ class PantallaDescansoVisual extends StatefulWidget {
 }
 
 class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
-  final int _totalSeconds = 20; // 20 segundos según la regla 20-20-20
-  int _remainingSeconds = 20;
-  bool _isRunning = true;
-  Timer? _timer;
+  final int _totalSeconds =
+      20; // 20 segundos de duración según la regla 20-20-20
+  int _remainingSeconds =
+      20; // Segundos restantes que se actualizan en el temporizador
+  bool _isRunning = true; // Bandera para indicar si el contador está activo
+  Timer? _timer; // Instancia del temporizador periódico
 
   @override
   void initState() {
     super.initState();
-    _startTimer();
+    _startTimer(); // Inicia el temporizador automáticamente al abrir la pantalla
   }
 
+  /// Método privado para inicializar el temporizador periódico que descuenta un segundo cada vez.
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds > 0) {
         setState(() => _remainingSeconds--);
       } else {
-        _timer?.cancel();
+        _timer?.cancel(); // Detiene el temporizador cuando llega a cero
         setState(() => _isRunning = false);
       }
     });
   }
 
+  /// Alterna el estado del temporizador entre en marcha (Play) y pausado (Pause).
   void _toggleTimer() {
     if (_isRunning) {
       _timer?.cancel();
@@ -42,6 +48,7 @@ class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
     }
   }
 
+  /// Reinicia el temporizador restableciendo los segundos iniciales y reanudando la cuenta.
   void _resetTimer() {
     _timer?.cancel();
     setState(() {
@@ -53,7 +60,7 @@ class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _timer?.cancel(); // Libera el temporizador para prevenir fugas de memoria al cerrar la pantalla
     super.dispose();
   }
 
@@ -66,6 +73,7 @@ class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
       appBar: AppBar(
         title: const Text('Descanso Visual'),
         actions: [
+          // Indicador visual en la barra superior (ej. porcentaje de efectividad o salud ocular)
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(
@@ -97,7 +105,7 @@ class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
           children: [
             const Spacer(),
 
-            // Indicación del ejercicio
+            // Instrucción principal del ejercicio visual
             Text(
               'Mira a un punto a 6 metros (20 pies)',
               textAlign: TextAlign.center,
@@ -107,7 +115,7 @@ class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
             ),
             const SizedBox(height: 32),
 
-            // Contador de segundos
+            // Muestra de forma destacada el contador de segundos restantes (ej. "20s")
             Text(
               '${_remainingSeconds}s',
               style: textTheme.displayLarge?.copyWith(
@@ -123,7 +131,7 @@ class _PantallaDescansoVisualState extends State<PantallaDescansoVisual> {
 
             const Spacer(),
 
-            // Controles de Play/Pause y Reinicio
+            // Botones de control interactivos (Pausa/Reproducción y Reinicio)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
