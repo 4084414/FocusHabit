@@ -3,6 +3,8 @@ import 'package:camera/camera.dart';
 
 import 'dart:async';
 
+import 'package:focushabit/data/database_helper.dart';
+
 /// Pantalla encargada de monitorizar la postura del usuario en tiempo real mediante la cámara
 /// y de mostrar un historial cronológico de alertas de postura incorrecta detectadas.
 class PantallaAlertasPostura extends StatefulWidget {
@@ -112,6 +114,13 @@ class _PantallaAlertasPosturaState extends State<PantallaAlertasPostura> {
       _puedeAgregarAlerta =
           false; // Bloquea temporalmente el botón de simulación
     });
+
+    // Guarda la alerta de postura en la tabla `alerta` de SQLite.
+    unawaited(
+      DatabaseHelper.instance
+          .guardarAlerta('postura')
+          .then<void>((_) {}, onError: (_) {}),
+    );
 
     // Inicia un temporizador de 10 segundos de enfriamiento (cooldown) antes de permitir otra simulación
     _temporizadorEspera = Timer(const Duration(seconds: 10), () {

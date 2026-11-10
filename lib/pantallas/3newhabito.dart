@@ -49,7 +49,7 @@ class _PantallaNuevoHabitoState extends State<PantallaNuevoHabito> {
       }
       _categoriaSeleccionada = categoria;
     } else {
-      _categoriaSeleccionada = 'Ergonomics'; // Categoría por defecto
+      _categoriaSeleccionada = 'Ergonomía'; // Categoría por defecto
     }
 
     // Extrae de forma segura el valor numérico del objetivo diario a partir del texto guardado

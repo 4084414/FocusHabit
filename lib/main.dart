@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:focushabit/data/habitos_controller.dart';
 import 'package:focushabit/data/theme_controller.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import 'pantallas/1hoy.dart';
 
@@ -37,7 +40,19 @@ abstract final class FocusHabitTheme {
   }
 }
 
-void main() {
+Future<void> main() async {
+  // Necesario para usar plugins y assets antes de runApp.
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // En web, sqflite necesita la fábrica basada en IndexedDB (sqflite_common_ffi_web).
+  // En Android/iOS/macOS no se toca nada: sqflite usa su motor nativo por defecto.
+  if (kIsWeb) {
+    databaseFactory = databaseFactoryFfiWeb;
+  }
+
+  // Abre (o crea) la base de datos y carga los hábitos guardados.
+  await HabitosController.instance.cargar();
+
   // Punto de entrada de la aplicación Flutter.
   runApp(const MyApp());
 }

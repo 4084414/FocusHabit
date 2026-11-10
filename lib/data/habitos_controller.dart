@@ -1,4 +1,9 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
+import 'database_helper.dart';
 
 /// Controlador singleton para gestionar la lista de hábitos, su estado de completado
 /// y los cálculos derivados (progreso, filtros, iconos).
@@ -7,69 +12,62 @@ class HabitosController extends ChangeNotifier {
   static final HabitosController instance = HabitosController._();
   HabitosController._();
 
-  // Lista privada que almacena los hábitos iniciales con sus propiedades.
-  final List<Map<String, String>> _habitos = [
-    {
-      'titulo': 'Postura recta en la silla',
-      'objetivo': '1 min cada hora',
-      'categoria': 'Ergonomics',
-      'completado': 'false',
-    },
-    {
-      'titulo': 'Regla 20-20-20 (descanso visual)',
-      'objetivo': '20 seg cada 20 min',
-      'categoria': 'Eye Care',
-      'completado': 'false',
-    },
-    {
-      'titulo': 'Vaso de agua al despertar',
-      'objetivo': '1 vez al día',
-      'categoria': 'Hydration',
-      'completado': 'false',
-    },
-    {
-      'titulo': 'Pausa activa y estiramientos',
-      'objetivo': '3 veces al día',
-      'categoria': 'Ergonomics',
-      'completado': 'false',
-    },
-    {
-      'titulo': 'Bloque de enfoque profundo (Pomodoro)',
-      'objetivo': '4 veces al día',
-      'categoria': 'Focus',
-      'completado': 'false',
-    },
-    {
-      'titulo': 'Parpadeo consciente e hidratación ocular',
-      'objetivo': '5 min al día',
-      'categoria': 'Eye Care',
-      'completado': 'false',
-    },
-    {
-      'titulo': 'Caminar o subir escaleras',
-      'objetivo': '2 veces al día',
-      'categoria': 'Fitness',
-      'completado': 'false',
-    },
-    {
-      'titulo': 'Beber agua durante la jornada',
-      'objetivo': '8 veces al día',
-      'categoria': 'Hydration',
-      'completado': 'false',
-    },
-    {
-      'titulo': 'Desconectar pantallas antes de dormir',
-      'objetivo': '1 vez al día',
-      'categoria': 'Sleep',
-      'completado': 'false',
-    },
-    {
-      'titulo': 'Ajustar brillo y distancia del monitor',
-      'objetivo': '1 vez al día',
-      'categoria': 'Ergonomics',
-      'completado': 'false',
-    },
-  ];
+  // Lista en memoria que refleja la tabla `habito` de SQLite.
+  // Cada mapa lleva además la clave 'id' (id de la fila en la base de datos).
+  final List<Map<String, String>> _habitos = [];
+
+  /// Carga los hábitos (y su estado de hoy) desde la base de datos.
+  /// Se llama una vez al arrancar la app, antes de runApp.
+  Future<void> cargar() async {
+    try {
+      final filas = await DatabaseHelper.instance.cargarHabitos();
+      _habitos
+        ..clear()
+        ..addAll(filas);
+    } catch (error) {
+      debugPrint('No se pudo cargar la base de datos: $error');
+    }
+    notifyListeners();
+  }
+
+  // Ejecuta una escritura en SQLite sin bloquear la interfaz.
+  void _guardar(Future<void> Function() accion) {
+    unawaited(
+      accion().catchError(
+        (Object error) => debugPrint('Error al guardar en SQLite: $error'),
+      ),
+    );
+  }
+
+  // Extrae la meta diaria numérica del texto de objetivo ("3 veces al día").
+  static int _metaDe(String? objetivo) {
+    final coincidencia = RegExp(r'\d+').firstMatch(objetivo ?? '');
+    final valor = int.tryParse(coincidencia?.group(0) ?? '') ?? 1;
+    return math.max(1, valor);
+  }
+
+  static int? _idDe(Map<String, String> habito) => int.tryParse(habito['id'] ?? '');
+
+  // Inserta el hábito en SQLite y guarda su id en el mapa.
+  Future<void> _insertarEnBd(Map<String, String> habito) async {
+    final id = await DatabaseHelper.instance.insertarHabito(
+      titulo: habito['titulo'] ?? '',
+      categoria: habito['categoria'] ?? 'Ergonomía',
+      metaDiaria: _metaDe(habito['objetivo']),
+    );
+    habito['id'] = '$id';
+    if (habito['completado'] == 'true') {
+      await DatabaseHelper.instance.fijarCompletadoHoy(id, true);
+    }
+  }
+
+  // Guarda en SQLite el estado de completado de un hábito.
+  void _guardarCompletado(Map<String, String> habito) {
+    final id = _idDe(habito);
+    if (id == null) return;
+    final completado = habito['completado'] == 'true';
+    _guardar(() => DatabaseHelper.instance.fijarCompletadoHoy(id, completado));
+  }
 
   // Getter público para obtener la lista completa de hábitos.
   List<Map<String, String>> get habitos => _habitos;
@@ -95,21 +93,44 @@ class HabitosController extends ChangeNotifier {
   void agregarHabito(Map<String, String> habito) {
     _habitos.add(habito);
     notifyListeners();
+    _guardar(() => _insertarEnBd(habito));
   }
 
   // Actualiza un hábito existente en una posición específica.
   void actualizarHabito(int indice, Map<String, String> habito) {
     if (indice >= 0 && indice < _habitos.length) {
+      final anterior = _habitos[indice];
+      final id = _idDe(anterior);
+      if (id != null) habito['id'] = '$id';
       _habitos[indice] = habito;
       notifyListeners();
+      if (id != null) {
+        _guardar(() async {
+          await DatabaseHelper.instance.actualizarHabito(
+            id,
+            titulo: habito['titulo'] ?? '',
+            categoria: habito['categoria'] ?? 'Ergonomía',
+            metaDiaria: _metaDe(habito['objetivo']),
+          );
+          // Solo toca los registros si el usuario cambió el estado de completado.
+          if (anterior['completado'] != habito['completado']) {
+            await DatabaseHelper.instance.fijarCompletadoHoy(
+              id,
+              habito['completado'] == 'true',
+            );
+          }
+        });
+      }
     }
   }
 
   // Elimina un hábito según su índice.
   void eliminarHabitoEnIndice(int indice) {
     if (indice >= 0 && indice < _habitos.length) {
-      _habitos.removeAt(indice);
+      final eliminado = _habitos.removeAt(indice);
       notifyListeners();
+      final id = _idDe(eliminado);
+      if (id != null) _guardar(() => DatabaseHelper.instance.eliminarHabito(id));
     }
   }
 
@@ -117,6 +138,7 @@ class HabitosController extends ChangeNotifier {
   void insertarHabito(int indice, Map<String, String> habito) {
     _habitos.insert(indice, habito);
     notifyListeners();
+    _guardar(() => _insertarEnBd(habito)); // vuelve a crearlo en la BD
   }
 
   // Alterna el estado de completado (true/false) pasando el mapa del hábito.
@@ -124,6 +146,7 @@ class HabitosController extends ChangeNotifier {
     final estaCompletado = habito['completado'] == 'true';
     habito['completado'] = estaCompletado ? 'false' : 'true';
     notifyListeners();
+    _guardarCompletado(habito);
   }
 
   // Alterna el estado de completado mediante el índice del hábito
@@ -132,6 +155,7 @@ class HabitosController extends ChangeNotifier {
       final estaCompletado = _habitos[indice]['completado'] == 'true';
       _habitos[indice]['completado'] = estaCompletado ? 'false' : 'true';
       notifyListeners();
+      _guardarCompletado(_habitos[indice]);
     }
   }
 

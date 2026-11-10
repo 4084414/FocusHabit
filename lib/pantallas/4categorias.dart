@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:focushabit/data/database_helper.dart';
+import 'package:focushabit/data/habitos_controller.dart';
 
-/// Pantalla encargada de mostrar el listado de categorías disponibles,
+/// Pantalla encargada de mostrar el listado de categorías guardadas en SQLite,
 /// junto con su icono representativo y la cantidad de hábitos asociados.
 class PantallaCategorias extends StatelessWidget {
   const PantallaCategorias({super.key});
-
-  // Lista estática que contiene los datos de cada categoría traducidos al español
-  final List<Map<String, dynamic>> _categorias = const [
-    {'nombre': 'Ergonomía', 'icono': Icons.chair_alt, 'cantidad': 5},
-    {'nombre': 'Salud visual', 'icono': Icons.visibility, 'cantidad': 3},
-    {'nombre': 'Hidratación', 'icono': Icons.water_drop, 'cantidad': 2},
-    {'nombre': 'Enfoque', 'icono': Icons.psychology, 'cantidad': 4},
-    {'nombre': 'Ejercicio', 'icono': Icons.fitness_center, 'cantidad': 6},
-    {'nombre': 'Sueño', 'icono': Icons.bedtime, 'cantidad': 1},
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -22,41 +14,57 @@ class PantallaCategorias extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Categorías')),
-      // ListView.builder para renderizar eficientemente la lista de categorías
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: _categorias.length,
-        itemBuilder: (context, indice) {
-          final categoria = _categorias[indice];
+      // Lee las categorías con su número de hábitos (LEFT JOIN + COUNT).
+      body: FutureBuilder<List<Map<String, Object?>>>(
+        future: DatabaseHelper.instance.categoriasConConteo(),
+        builder: (context, instantanea) {
+          if (instantanea.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final categorias = instantanea.data ?? const [];
+          if (categorias.isEmpty) {
+            return const Center(child: Text('No hay categorías todavía'));
+          }
 
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8.0),
-            child: ListTile(
-              // Icono representativo de la categoría utilizando el color primario del tema
-              leading: Icon(
-                categoria['icono'] as IconData,
-                color: esquemaColores.primary,
-              ),
-              // Nombre de la categoría en español
-              title: Text(
-                categoria['nombre'] as String,
-                style: temaTexto.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+          // ListView.builder para renderizar eficientemente la lista de categorías
+          return ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: categorias.length,
+            itemBuilder: (context, indice) {
+              final categoria = categorias[indice];
+              final nombre = categoria['nombre'] as String;
+              final cantidad = categoria['cantidad'] as int;
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8.0),
+                child: ListTile(
+                  // Icono representativo de la categoría con el color primario del tema
+                  leading: Icon(
+                    HabitosController.obtenerIconoPorCategoria(nombre),
+                    color: esquemaColores.primary,
+                  ),
+                  // Nombre de la categoría
+                  title: Text(
+                    nombre,
+                    style: temaTexto.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  // Subtítulo con el número de hábitos de esta categoría
+                  subtitle: Text(
+                    cantidad == 1 ? '1 hábito' : '$cantidad hábitos',
+                    style: temaTexto.bodyMedium?.copyWith(
+                      color: esquemaColores.onSurfaceVariant,
+                    ),
+                  ),
+                  // Icono indicador de navegación hacia la derecha
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    // Aquí puedes agregar la navegación hacia una vista filtrada por categoría si lo deseas
+                  },
                 ),
-              ),
-              // Subtítulo que indica cuántos hábitos activos pertenecen a esta categoría
-              subtitle: Text(
-                '${categoria['cantidad']} hábitos activos',
-                style: temaTexto.bodyMedium?.copyWith(
-                  color: esquemaColores.onSurfaceVariant,
-                ),
-              ),
-              // Icono indicador de navegación hacia la derecha
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // Aquí puedes agregar la navegación hacia una vista filtrada por categoría si lo deseas
-              },
-            ),
+              );
+            },
           );
         },
       ),
